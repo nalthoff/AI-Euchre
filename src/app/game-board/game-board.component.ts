@@ -9,8 +9,16 @@ import { GameService, Card } from '../services/game.service';
   templateUrl: './game-board.component.html',
   styleUrls: ['./game-board.component.scss']
 })
+
 export class GameBoardComponent {
   constructor(public gameSvc: GameService) {}
+
+  suitSymbols: Record<string,string> = {
+    hearts:   '♥',
+    diamonds: '♦',
+    clubs:    '♣',
+    spades:   '♠'
+  };
 
   // Dynamically return whatever the service currently has
   get hands(): Card[][] {

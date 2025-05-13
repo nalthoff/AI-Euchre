@@ -1,35 +1,45 @@
 <div class="game-board">
-
-  <!-- 1. Always show just the human player's hand -->
-  <div class="player-hand">
-    <h4>Your Hand</h4>
-    <div class="cards">
-      <div class="card" *ngFor="let card of hands[0]">
-        {{ card.rank }} of {{ card.suit }}
-      </div>
-    </div>
-  </div>
-
-  <!-- 2. Trump-selection overlay, until trump is chosen -->
+  <!-- 1) Trump‐selection overlay, until trump chosen -->
   <div class="trump-selection" *ngIf="!gameSvc.trump && gameSvc.currentKitty">
     <h3>Trump Up: {{ gameSvc.currentKitty.rank }} of {{ gameSvc.currentKitty.suit }}</h3>
     <button (click)="gameSvc.orderUp()">Order Up</button>
     <button (click)="gameSvc.pass()">Pass</button>
   </div>
 
-  <!-- 3. Once trump is set, show opponents as facedown cards -->
-  <ng-container *ngIf="gameSvc.trump">
-    <p><strong>Trump:</strong> {{ gameSvc.trump }}</p>
+  <!-- 2) Seats laid out around the table -->
+  <div class="seat top" *ngIf="gameSvc.trump">
+    <h4>Partner</h4>
+    <div class="cards">
+      <div class="card-back" *ngFor="let _ of hands[2]">🂠</div>
+    </div>
+  </div>
 
-    <ng-container *ngFor="let hand of hands.slice(1); let i = index">
-      <div class="player-hand">
-        <h4>Player {{ i + 2 }}</h4>
-        <div class="cards">
-          <!-- Show a facedown card icon for each card they hold -->
-          <div class="card-back" *ngFor="let _ of hand">🂠</div>
-        </div>
+  <div class="seat left" *ngIf="gameSvc.trump">
+    <h4>Left Opponent</h4>
+    <div class="cards">
+      <div class="card-back" *ngFor="let _ of hands[3]">🂠</div>
+    </div>
+  </div>
+
+  <div class="seat right" *ngIf="gameSvc.trump">
+    <h4>Right Opponent</h4>
+    <div class="cards">
+      <div class="card-back" *ngFor="let _ of hands[1]">🂠</div>
+    </div>
+  </div>
+
+  <!-- 3) Your hand always visible at bottom -->
+  <div class="seat bottom">
+    <h4>Your Hand</h4>
+    <div class="cards">
+      <div class="card" *ngFor="let card of hands[0]">
+        <span class="rank">{{ card.rank }}</span>
+        <span 
+          class="suit" 
+          [ngClass]="{'red-suit': card.suit==='hearts' || card.suit==='diamonds'}">
+          {{ suitSymbols[card.suit] }}
+        </span>
       </div>
-    </ng-container>
-  </ng-container>
-
+    </div>
+  </div>
 </div>
