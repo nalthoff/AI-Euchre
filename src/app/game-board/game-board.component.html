@@ -17,18 +17,16 @@
     <button (click)="gameSvc.pass()">Pass</button>
   </div>
 
-  <!-- 3. Once trump is set, show opponents -->
+  <!-- 3. Once trump is set, show opponents as facedown cards -->
   <ng-container *ngIf="gameSvc.trump">
     <p><strong>Trump:</strong> {{ gameSvc.trump }}</p>
 
-    <!-- slice(1) skips your hand, so this loops over players 2–4 -->
     <ng-container *ngFor="let hand of hands.slice(1); let i = index">
       <div class="player-hand">
         <h4>Player {{ i + 2 }}</h4>
         <div class="cards">
-          <div class="card" *ngFor="let card of hand">
-            {{ card.rank }} of {{ card.suit }}
-          </div>
+          <!-- Show a facedown card icon for each card they hold -->
+          <div class="card-back" *ngFor="let _ of hand">🂠</div>
         </div>
       </div>
     </ng-container>
