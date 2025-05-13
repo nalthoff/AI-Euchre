@@ -1,1 +1,11 @@
-<p>game-board works!</p>
+<div class="game-board">
+    <div class="player-hand" *ngFor="let hand of hands; let i = index">
+      <h4>Player {{ i + 1 }}</h4>
+      <div class="cards">
+        <div class="card" *ngFor="let card of hand">
+          {{ card.rank }} of {{ card.suit }}
+        </div>
+      </div>
+    </div>
+  </div>
+  
