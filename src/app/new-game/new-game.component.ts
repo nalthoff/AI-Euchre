@@ -16,9 +16,10 @@ import { GameService } from '../services/game.service';
 export class NewGameComponent {
   difficulty: 'easy' | 'medium' | 'hard' = 'medium';
 
-  constructor(private gameSvc: GameService) {}
+  constructor(private gameSvc: GameService) { }
 
   startGame(): void {
+    this.gameSvc.difficulty = this.difficulty;
     const hands = this.gameSvc.dealHands();
     this.gameSvc.currentHands = hands;
   }

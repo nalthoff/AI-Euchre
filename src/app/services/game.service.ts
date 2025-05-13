@@ -16,21 +16,24 @@ export class GameService {
   public currentHands: Card[][] = [];
   public currentKitty: Card | null = null;   // ← new
   public trump: Suit | null = null;          // ← new
-    // NEW: track the cards played this trick
-    public currentTrick: { player: number; card: Card }[] = [];
+  // NEW: track the cards played this trick
+  public currentTrick: { player: number; card: Card }[] = [];
+
+    // ← NEW: store the selected AI difficulty
+    public difficulty: 'easy' | 'medium' | 'hard' = 'medium';
     
   // Deal hands **and** set the kitty
   dealHands(): Card[][] {
     const deck = this.createDeck();
     this.shuffle(deck);
-    const hands: Card[][] = [[],[],[],[]];
+    const hands: Card[][] = [[], [], [], []];
     for (let round = 0; round < 5; round++) {
       for (let p = 0; p < 4; p++) {
         hands[p].push(deck.pop()!);
       }
     }
     // Flip up the next card as the kitty
-    this.currentKitty = deck.pop()!;         
+    this.currentKitty = deck.pop()!;
     this.currentHands = hands;
     this.trump = null;                       // reset any previous trump
     this.currentTrick = [];    // reset trick
@@ -49,20 +52,20 @@ export class GameService {
     this.trump = null;
   }
 
-    // NEW: play a card from `player` into the trick
-    playCard(player: number, card: Card): void {
-      const hand = this.currentHands[player];
-      const idx = hand.findIndex(c => c.rank === card.rank && c.suit === card.suit);
-      if (idx === -1) { return; }
-      hand.splice(idx, 1);
-      this.currentTrick.push({ player, card });
-      // once 4 cards are played, resolve trick
-      if (this.currentTrick.length === 4) {
-        this.resolveTrick();
-      }
+  // NEW: play a card from `player` into the trick
+  playCard(player: number, card: Card): void {
+    const hand = this.currentHands[player];
+    const idx = hand.findIndex(c => c.rank === card.rank && c.suit === card.suit);
+    if (idx === -1) { return; }
+    hand.splice(idx, 1);
+    this.currentTrick.push({ player, card });
+    // once 4 cards are played, resolve trick
+    if (this.currentTrick.length === 4) {
+      this.resolveTrick();
     }
+  }
 
-      // VERY BASIC stub — replace with full rule logic later
+  // VERY BASIC stub — replace with full rule logic later
   private resolveTrick(): void {
     // pick winner (for now, first player)
     const winner = this.currentTrick[0].player;
@@ -74,8 +77,8 @@ export class GameService {
   }
   // Create a 24-card Euchre deck
   private createDeck(): Card[] {
-    const suits: Suit[] = ['hearts','diamonds','clubs','spades'];
-    const ranks: Rank[] = ['9','10','J','Q','K','A'];
+    const suits: Suit[] = ['hearts', 'diamonds', 'clubs', 'spades'];
+    const ranks: Rank[] = ['9', '10', 'J', 'Q', 'K', 'A'];
     const deck: Card[] = [];
     for (let s of suits) {
       for (let r of ranks) {
