@@ -16,7 +16,9 @@ export class GameService {
   public currentHands: Card[][] = [];
   public currentKitty: Card | null = null;   // ← new
   public trump: Suit | null = null;          // ← new
-  
+    // NEW: track the cards played this trick
+    public currentTrick: { player: number; card: Card }[] = [];
+    
   // Deal hands **and** set the kitty
   dealHands(): Card[][] {
     const deck = this.createDeck();
@@ -31,6 +33,7 @@ export class GameService {
     this.currentKitty = deck.pop()!;         
     this.currentHands = hands;
     this.trump = null;                       // reset any previous trump
+    this.currentTrick = [];    // reset trick
     return hands;
   }
 
@@ -46,6 +49,29 @@ export class GameService {
     this.trump = null;
   }
 
+    // NEW: play a card from `player` into the trick
+    playCard(player: number, card: Card): void {
+      const hand = this.currentHands[player];
+      const idx = hand.findIndex(c => c.rank === card.rank && c.suit === card.suit);
+      if (idx === -1) { return; }
+      hand.splice(idx, 1);
+      this.currentTrick.push({ player, card });
+      // once 4 cards are played, resolve trick
+      if (this.currentTrick.length === 4) {
+        this.resolveTrick();
+      }
+    }
+
+      // VERY BASIC stub — replace with full rule logic later
+  private resolveTrick(): void {
+    // pick winner (for now, first player)
+    const winner = this.currentTrick[0].player;
+    console.log(`Trick won by player ${winner + 1}`);
+    // reset trick after short delay
+    setTimeout(() => {
+      this.currentTrick = [];
+    }, 1500);
+  }
   // Create a 24-card Euchre deck
   private createDeck(): Card[] {
     const suits: Suit[] = ['hearts','diamonds','clubs','spades'];
@@ -67,17 +93,4 @@ export class GameService {
     }
   }
 
-  // // Deal 5 cards to each of 4 players, return an array of 4 hands
-  // dealHands(): Card[][] {
-  //   const deck = this.createDeck();
-  //   this.shuffle(deck);
-  //   const hands: Card[][] = [[], [], [], []];
-  //   // deal 5 cards each
-  //   for (let round = 0; round < 5; round++) {
-  //     for (let player = 0; player < 4; player++) {
-  //       hands[player].push(deck.pop()!);
-  //     }
-  //   }
-  //   return hands;
-  // }
 }

@@ -32,12 +32,26 @@
   <div class="seat bottom">
     <h4>Your Hand</h4>
     <div class="cards">
-      <div class="card" *ngFor="let card of hands[0]">
+      <div class="card" *ngFor="let card of hands[0]" (click)="onCardClick(card)">
         <span class="rank">{{ card.rank }}</span>
-        <span 
-          class="suit" 
-          [ngClass]="{'red-suit': card.suit==='hearts' || card.suit==='diamonds'}">
+        <span class="suit" [ngClass]="{'red-suit': card.suit==='hearts' || card.suit==='diamonds'}">
           {{ suitSymbols[card.suit] }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- NEW: Current Trick Visualization -->
+  <div class="trick-area" *ngIf="currentTrick.length">
+    <h4>Current Trick</h4>
+    <div class="cards">
+      <div class="card-played" *ngFor="let play of currentTrick">
+        <span class="seat-label">P{{ play.player + 1 }}</span>
+        <span class="card">
+          {{ play.card.rank }}
+          <span class="suit" [ngClass]="{'red-suit': play.card.suit==='hearts'||play.card.suit==='diamonds'}">
+            {{ suitSymbols[play.card.suit] }}
+          </span>
         </span>
       </div>
     </div>
