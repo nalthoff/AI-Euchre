@@ -14,7 +14,38 @@ export interface Card {
 export class GameService {
 
   public currentHands: Card[][] = [];
+  public currentKitty: Card | null = null;   // ← new
+  public trump: Suit | null = null;          // ← new
   
+  // Deal hands **and** set the kitty
+  dealHands(): Card[][] {
+    const deck = this.createDeck();
+    this.shuffle(deck);
+    const hands: Card[][] = [[],[],[],[]];
+    for (let round = 0; round < 5; round++) {
+      for (let p = 0; p < 4; p++) {
+        hands[p].push(deck.pop()!);
+      }
+    }
+    // Flip up the next card as the kitty
+    this.currentKitty = deck.pop()!;         
+    this.currentHands = hands;
+    this.trump = null;                       // reset any previous trump
+    return hands;
+  }
+
+  // Called when the user “Orders Up” the kitty suit
+  orderUp(): void {
+    if (this.currentKitty) {
+      this.trump = this.currentKitty.suit;
+    }
+  }
+
+  // Called when the user “Passes”
+  pass(): void {
+    this.trump = null;
+  }
+
   // Create a 24-card Euchre deck
   private createDeck(): Card[] {
     const suits: Suit[] = ['hearts','diamonds','clubs','spades'];
@@ -36,17 +67,17 @@ export class GameService {
     }
   }
 
-  // Deal 5 cards to each of 4 players, return an array of 4 hands
-  dealHands(): Card[][] {
-    const deck = this.createDeck();
-    this.shuffle(deck);
-    const hands: Card[][] = [[], [], [], []];
-    // deal 5 cards each
-    for (let round = 0; round < 5; round++) {
-      for (let player = 0; player < 4; player++) {
-        hands[player].push(deck.pop()!);
-      }
-    }
-    return hands;
-  }
+  // // Deal 5 cards to each of 4 players, return an array of 4 hands
+  // dealHands(): Card[][] {
+  //   const deck = this.createDeck();
+  //   this.shuffle(deck);
+  //   const hands: Card[][] = [[], [], [], []];
+  //   // deal 5 cards each
+  //   for (let round = 0; round < 5; round++) {
+  //     for (let player = 0; player < 4; player++) {
+  //       hands[player].push(deck.pop()!);
+  //     }
+  //   }
+  //   return hands;
+  // }
 }

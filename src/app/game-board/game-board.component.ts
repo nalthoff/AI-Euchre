@@ -10,7 +10,7 @@ import { GameService, Card } from '../services/game.service';
   styleUrls: ['./game-board.component.scss']
 })
 export class GameBoardComponent {
-  constructor(private gameSvc: GameService) {}
+  constructor(public gameSvc: GameService) {}
 
   // Dynamically return whatever the service currently has
   get hands(): Card[][] {
