@@ -74,3 +74,19 @@
   background-color: #005500; // darker green for backs
   color: #fff;
 }
+
+/* Center the trick area in the ‘main’ cell */
+.trick-area {
+  grid-area: main;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Optional: add some padding or background so it stands out */
+  padding: 0.5rem;
+  background: rgba(255,255,255,0.2);
+  border-radius: 6px;
+}
+
+.trick-area .cards {
+  margin-top: 0.5rem;
+}
