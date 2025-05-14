@@ -90,3 +90,23 @@
 .trick-area .cards {
   margin-top: 0.5rem;
 }
+
+.restart-container {
+  grid-area: bottom;
+  margin-top: 1rem;
+  text-align: center;
+
+  .new-game-btn {
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    border: 2px solid #fff;
+    background: #006400;
+    color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+
+    &:hover {
+      background: #008000;
+    }
+  }
+}

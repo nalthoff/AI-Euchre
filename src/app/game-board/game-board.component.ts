@@ -77,9 +77,18 @@ export class GameBoardComponent implements OnInit, OnDestroy {
 
   // Let AI play in order until it's back to human (player 0) or trick is done
   private continueAIMoves(): void {
+    // if the human has no cards, the hand is over—stop here
+    if (this.gameSvc.currentHands[0].length === 0) {
+      return;
+    }
+  
     while (this.gameSvc.currentTrick.length < 4) {
       const next = (this.gameSvc.currentLeader + this.gameSvc.currentTrick.length) % 4;
-      if (next === 0) break;  // it’s your turn
+      if (next === 0) {
+        // back to you—stop AI
+        break;
+      }
+  
       const aiCard = this.aiService.getAIMove(
         next,
         this.gameSvc.currentHands,
@@ -87,13 +96,27 @@ export class GameBoardComponent implements OnInit, OnDestroy {
         this.gameSvc.trump!,
         this.gameSvc.difficulty
       );
+      if (!aiCard) {
+        // someone has no cards left, so the hand is done
+        break;
+      }
+  
       this.gameSvc.playCard(next, aiCard);
-      // if that was the 4th card, resolveTrick() will fire and schedule the next trick via trickResolved
+  
+      // if that play filled the trick, let resolveTrick() finish then kick off next via trickResolved
       if (this.gameSvc.currentTrick.length === 4) {
         break;
       }
     }
   }
+
+    /** Start a fresh deal */
+    restart(): void {
+      // Preserve previously chosen difficulty
+      this.gameSvc.dealHands();
+      // If you want AI to lead immediately (e.g. if leader ≠ 0), kick off:
+      this.startTrick();
+    }
 
   // Dynamically return whatever the service currently has
   get hands(): Card[][] {

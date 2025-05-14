@@ -13,7 +13,12 @@ export class AiOpponentService {
     currentTrick: { player: number; card: Card }[],
     trump: Suit | null,
     difficulty: 'easy' | 'medium' | 'hard'
-  ): Card {
-    return hands[playerIndex][0];
+  ): Card | null {
+    const hand = hands[playerIndex];
+    if (!hand || hand.length === 0) {
+      return null;  // no cards → bail out
+    }
+    // still a stub, but now safe
+    return hand[0];
   }
 }
