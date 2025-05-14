@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Subscription } from 'rxjs';            // ← import
 import { GameService, Card } from '../services/game.service';
 import { AiOpponentService } from '../services/ai-opponent.service';
 
@@ -11,7 +12,9 @@ import { AiOpponentService } from '../services/ai-opponent.service';
   styleUrls: ['./game-board.component.scss']
 })
 
-export class GameBoardComponent {
+export class GameBoardComponent implements OnInit, OnDestroy {
+
+  private sub = new Subscription();
 
   suitSymbols: Record<string, string> = {
     hearts: '♥',
@@ -25,30 +28,73 @@ export class GameBoardComponent {
     private aiService: AiOpponentService
   ) { }
 
+  ngOnInit() {
+    // whenever a trick finishes, auto‐start the next one
+    this.sub.add(
+      this.gameSvc.trickResolved.subscribe(() => {
+        this.startTrick();
+      })
+    );
+  }
+
+  ngOnDestroy() {
+    this.sub.unsubscribe();
+  }
+
   // expose trick array for template
   get currentTrick() {
     return this.gameSvc.currentTrick;
   }
 
-  // NEW: when user clicks their card
-  onCardClick(card: Card): void {
-    if (!this.gameSvc.trump) { return; }
-    // 1) Your play
-    this.gameSvc.playCard(0, card);
+  /** Called when the user clicks “Order Up” */
+  onOrderUp(): void {
+    this.gameSvc.orderUp();
+    this.startTrick();
+  }
 
-    // 2) AI plays for players 1–3 in order
-    for (let p = 1; p < 4; p++) {
+  /** Called when the user clicks “Pass” */
+  onPass(): void {
+    this.gameSvc.pass();
+    this.startTrick();
+  }
+
+  // Called when user clicks one of their cards
+  onCardClick(card: Card): void {
+    // Only allow click if it's the human's turn
+    const nextToPlay = (this.gameSvc.currentLeader + this.currentTrick.length) % 4;
+    if (nextToPlay !== 0 || !this.gameSvc.trump) {
+      return;
+    }
+    this.gameSvc.playCard(0, card);
+    this.continueAIMoves();
+  }
+
+  // Begin a new trick: let AI start if leader isn't human
+  private startTrick(): void {
+    // make sure trick is clear (service just did that), then let AI lead if needed
+    this.continueAIMoves();
+  }
+
+  // Let AI play in order until it's back to human (player 0) or trick is done
+  private continueAIMoves(): void {
+    while (this.gameSvc.currentTrick.length < 4) {
+      const next = (this.gameSvc.currentLeader + this.gameSvc.currentTrick.length) % 4;
+      if (next === 0) break;  // it’s your turn
       const aiCard = this.aiService.getAIMove(
-        p,
+        next,
         this.gameSvc.currentHands,
         this.gameSvc.currentTrick,
         this.gameSvc.trump!,
         this.gameSvc.difficulty
       );
-      this.gameSvc.playCard(p, aiCard);
+      this.gameSvc.playCard(next, aiCard);
+      // if that was the 4th card, resolveTrick() will fire and schedule the next trick via trickResolved
+      if (this.gameSvc.currentTrick.length === 4) {
+        break;
+      }
     }
   }
-  
+
   // Dynamically return whatever the service currently has
   get hands(): Card[][] {
     return this.gameSvc.currentHands;

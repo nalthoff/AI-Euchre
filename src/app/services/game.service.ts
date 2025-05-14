@@ -1,5 +1,6 @@
 // src/app/services/game.service.ts
 import { Injectable } from '@angular/core';
+import { Subject } from 'rxjs';            // ← import
 
 export type Suit = 'hearts' | 'diamonds' | 'clubs' | 'spades';
 export type Rank = '9' | '10' | 'J' | 'Q' | 'K' | 'A';
@@ -21,6 +22,9 @@ export class GameService {
   public difficulty: 'easy' | 'medium' | 'hard' = 'medium';
 
   public currentLeader = 0;  // who leads each trick
+
+  /** Emits after resolveTrick has cleared and is ready to start the next trick */
+  public trickResolved = new Subject<void>();   // ← new
 
   // Deal hands, set kitty & reset state
   dealHands(): Card[][] {
@@ -66,18 +70,20 @@ export class GameService {
     }
   }
 
+  
   // Resolve the current trick using Euchre rules & set next leader
   private resolveTrick(): void {
     if (this.currentTrick.length !== 4 || this.trump === null) return;
-
-    // Determine effective lead suit (accounting for bowers)
+  
+    // 1) Determine the effective lead suit (accounting for bowers)
     const leadCard = this.currentTrick[0].card;
     const leadSuit = this.getEffectiveSuit(leadCard, this.trump);
-
-    // Find winning play
+  
+    // 2) Initialize winner as the first play
     let winningPlay = this.currentTrick[0];
     let highestWeight = this.getCardWeight(winningPlay.card, leadSuit, this.trump);
-
+  
+    // 3) Loop the rest to find any stronger play
     for (let i = 1; i < 4; i++) {
       const play = this.currentTrick[i];
       const weight = this.getCardWeight(play.card, leadSuit, this.trump);
@@ -86,14 +92,15 @@ export class GameService {
         winningPlay = play;
       }
     }
-
-    // Set next leader
+  
+    // 4) Set the leader for the next trick
     this.currentLeader = winningPlay.player;
     console.log(`Player ${winningPlay.player + 1} wins the trick`);
-
-    // Clear trick after a brief pause
+  
+    // 5) After a short pause, clear the trick and notify listeners
     setTimeout(() => {
       this.currentTrick = [];
+      this.trickResolved.next();
     }, 1500);
   }
 

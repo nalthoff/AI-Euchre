@@ -1,59 +1,80 @@
 <div class="game-board">
-  <!-- 1) Trump‐selection overlay, until trump chosen -->
+
+  <!-- 1) Trump selection, until trump is chosen -->
   <div class="trump-selection" *ngIf="!gameSvc.trump && gameSvc.currentKitty">
-    <h3>Trump Up: {{ gameSvc.currentKitty.rank }} of {{ gameSvc.currentKitty.suit }}</h3>
-    <button (click)="gameSvc.orderUp()">Order Up</button>
-    <button (click)="gameSvc.pass()">Pass</button>
+    <h3>
+      Trump Up: 
+      {{ gameSvc.currentKitty.rank }} 
+      {{ suitSymbols[gameSvc.currentKitty.suit] }}
+    </h3>
+    <button (click)="onOrderUp()">Order Up</button>
+    <button (click)="onPass()">Pass</button>
   </div>
 
-  <!-- 2) Seats laid out around the table -->
+  <!-- 2) AI seats, once trump is set -->
   <div class="seat top" *ngIf="gameSvc.trump">
     <h4>Partner</h4>
     <div class="cards">
-      <div class="card-back" *ngFor="let _ of hands[2]">🂠</div>
+      <div class="card-back" *ngFor="let _ of gameSvc.currentHands[2]">🂠</div>
     </div>
   </div>
-
   <div class="seat left" *ngIf="gameSvc.trump">
     <h4>Left Opponent</h4>
     <div class="cards">
-      <div class="card-back" *ngFor="let _ of hands[3]">🂠</div>
+      <div class="card-back" *ngFor="let _ of gameSvc.currentHands[3]">🂠</div>
     </div>
   </div>
-
   <div class="seat right" *ngIf="gameSvc.trump">
     <h4>Right Opponent</h4>
     <div class="cards">
-      <div class="card-back" *ngFor="let _ of hands[1]">🂠</div>
+      <div class="card-back" *ngFor="let _ of gameSvc.currentHands[1]">🂠</div>
     </div>
   </div>
 
-  <!-- 3) Your hand always visible at bottom -->
-  <div class="seat bottom">
-    <h4>Your Hand</h4>
-    <div class="cards">
-      <div class="card" *ngFor="let card of hands[0]" (click)="onCardClick(card)">
-        <span class="rank">{{ card.rank }}</span>
-        <span class="suit" [ngClass]="{'red-suit': card.suit==='hearts' || card.suit==='diamonds'}">
-          {{ suitSymbols[card.suit] }}
-        </span>
-      </div>
-    </div>
-  </div>
-
-  <!-- NEW: Current Trick Visualization -->
+  <!-- 3) Trick area in center -->
   <div class="trick-area main" *ngIf="currentTrick.length">
     <h4>Current Trick</h4>
     <div class="cards">
       <div class="card-played" *ngFor="let play of currentTrick">
         <span class="seat-label">P{{ play.player + 1 }}</span>
-        <span class="card">
+        <span 
+          class="card"
+          [ngClass]="{'played-card': true}"
+        >
           {{ play.card.rank }}
-          <span class="suit" [ngClass]="{'red-suit': play.card.suit==='hearts'||play.card.suit==='diamonds'}">
+          <span
+            class="suit"
+            [ngClass]="{
+              'red-suit': play.card.suit==='hearts'||play.card.suit==='diamonds'
+            }"
+          >
             {{ suitSymbols[play.card.suit] }}
           </span>
         </span>
       </div>
     </div>
   </div>
+
+  <!-- 4) Human hand at bottom; clickable cards -->
+  <div class="seat bottom">
+    <h4>Your Hand</h4>
+    <div class="cards">
+      <div
+        class="card"
+        *ngFor="let card of gameSvc.currentHands[0]"
+        (click)="onCardClick(card)"
+      >
+        <span class="rank">{{ card.rank }}</span>
+        <span
+          class="suit"
+          [ngClass]="{
+            'red-suit': card.suit==='hearts'||card.suit==='diamonds'
+          }"
+        >
+          {{ suitSymbols[card.suit] }}
+        </span>
+      </div>
+    </div>
+  </div>
+
 </div>
