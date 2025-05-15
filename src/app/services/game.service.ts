@@ -100,10 +100,10 @@ export class GameService {
     console.log(`Player ${winningPlay.player + 1} wins the trick`);
   
     // 5) After a short pause, clear the trick and notify listeners
-    setTimeout(() => {
-      this.currentTrick = [];
-      this.trickResolved.next();
-    }, 1500);
+    // setTimeout(() => {
+    //   this.currentTrick = [];
+    //   this.trickResolved.next();
+    // }, 1500);
   }
 
   // Create a standard 24-card Euchre deck

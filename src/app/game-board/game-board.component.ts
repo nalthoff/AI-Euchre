@@ -106,6 +106,12 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Clear the laid cards and start next trick on user click */
+  onAdvanceTrick(): void {
+    this.gameSvc.currentTrick = [];
+    this.startTrick();
+  }
+
   /** Start a fresh deal */
   restart(): void {
     // Preserve previously chosen difficulty

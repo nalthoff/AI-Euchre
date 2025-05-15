@@ -3,8 +3,8 @@
   <!-- 1) Trump selection, until trump is chosen -->
   <div class="trump-selection" *ngIf="!gameSvc.trump && gameSvc.currentKitty">
     <h3>
-      Trump Up: 
-      {{ gameSvc.currentKitty.rank }} 
+      Trump Up:
+      {{ gameSvc.currentKitty.rank }}
       {{ suitSymbols[gameSvc.currentKitty.suit] }}
     </h3>
     <button (click)="onOrderUp()">Order Up</button>
@@ -32,45 +32,34 @@
   </div>
 
   <!-- 3) Trick area in center -->
-  <div class="trick-area main" *ngIf="currentTrick.length">
+  <!-- <div class="trick-area main" *ngIf="currentTrick.length"> -->
+  <div class="trick-area main" *ngIf="currentTrick.length" (click)="onAdvanceTrick()">
     <h4>Current Trick</h4>
     <div class="cards">
       <div class="card-played" *ngFor="let play of currentTrick">
         <span class="seat-label">P{{ play.player + 1 }}</span>
-        <span 
-          class="card"
-          [ngClass]="{'played-card': true}"
-        >
+        <span class="card" [ngClass]="{'played-card': true}">
           {{ play.card.rank }}
-          <span
-            class="suit"
-            [ngClass]="{
+          <span class="suit" [ngClass]="{
               'red-suit': play.card.suit==='hearts'||play.card.suit==='diamonds'
-            }"
-          >
+            }">
             {{ suitSymbols[play.card.suit] }}
           </span>
         </span>
       </div>
     </div>
+    <p class="advance-hint">Click here to advance to the next trick</p>
   </div>
 
   <!-- 4) Human hand at bottom; clickable cards -->
   <div class="seat bottom">
     <h4>Your Hand</h4>
     <div class="cards">
-      <div
-        class="card"
-        *ngFor="let card of gameSvc.currentHands[0]"
-        (click)="onCardClick(card)"
-      >
+      <div class="card" *ngFor="let card of gameSvc.currentHands[0]" (click)="onCardClick(card)">
         <span class="rank">{{ card.rank }}</span>
-        <span
-          class="suit"
-          [ngClass]="{
+        <span class="suit" [ngClass]="{
             'red-suit': card.suit==='hearts'||card.suit==='diamonds'
-          }"
-        >
+          }">
           {{ suitSymbols[card.suit] }}
         </span>
       </div>
