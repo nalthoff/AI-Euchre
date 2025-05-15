@@ -8,7 +8,7 @@
   grid-auto-rows: auto;
   gap: 1rem;
   padding: 1rem;
-  background-color: #006400;  // felt-green table background
+  background-color: #006400; // felt-green table background
 }
 
 .seat {
@@ -17,19 +17,30 @@
   align-items: center;
 
   &.bottom {
-    padding-top: 1rem;       // pull your hand up a bit
+    padding-top: 1rem; // pull your hand up a bit
   }
 
   h4 {
     margin-bottom: 0.5rem;
-    color: #fff;             // white labels on green
+    color: #fff; // white labels on green
   }
 }
 
-.top    { grid-area: top; }
-.left   { grid-area: left; }
-.right  { grid-area: right; }
-.bottom { grid-area: bottom; }
+.top {
+  grid-area: top;
+}
+
+.left {
+  grid-area: left;
+}
+
+.right {
+  grid-area: right;
+}
+
+.bottom {
+  grid-area: bottom;
+}
 
 .cards {
   display: flex;
@@ -54,19 +65,20 @@
   background-color: #fff;
   color: #000;
   border: 1px solid #333;
-  font-size: 1.6rem;         // overall larger text
+  font-size: 1.6rem; // overall larger text
 
   .rank {
-    font-size: 1.4rem;       // larger rank
+    font-size: 1.4rem; // larger rank
     line-height: 1;
   }
 
   .suit {
-    font-size: 2rem;         // extra-large suit symbol
+    font-size: 2rem; // extra-large suit symbol
     line-height: 1;
   }
+
   .red-suit {
-    color: #c00;   // deep red; adjust to taste
+    color: #c00; // deep red; adjust to taste
   }
 }
 
@@ -83,7 +95,7 @@
   align-items: center;
   /* Optional: add some padding or background so it stands out */
   padding: 0.5rem;
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 6px;
 }
 
@@ -109,4 +121,15 @@
       background: #008000;
     }
   }
+}
+
+.discard-hint {
+  color: #ff0;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.discarding {
+  border: 2px solid red;
+  opacity: 0.85;
 }

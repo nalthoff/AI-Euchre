@@ -49,6 +49,11 @@ export class GameBoardComponent implements OnInit, OnDestroy {
   /** Called when the user clicks “Order Up” */
   onOrderUp(): void {
     this.gameSvc.orderUp();
+  }
+
+  /** After ordering up, user clicks a card to discard */
+  onDiscardCard(card: Card): void {
+    this.gameSvc.discard(card);
     this.startTrick();
   }
 

@@ -22,6 +22,7 @@ export class GameService {
   public currentTrick: { player: number; card: Card }[] = [];
   // ← NEW: store the selected AI difficulty
   public difficulty: 'easy' | 'medium' | 'hard' = 'medium';
+  public awaitingDiscard = false;
 
   public currentLeader = 0;  // who leads each trick
 
@@ -50,8 +51,24 @@ export class GameService {
 
   orderUp(): void {
     if (this.currentKitty) {
+      // set trump
       this.trump = this.currentKitty.suit;
+      // add kitty into dealer’s (player 0) hand
+      this.currentHands[0].push(this.currentKitty);
+      // now require a discard
+      this.awaitingDiscard = true;
+      // clear kitty so it’s no longer shown
+      this.currentKitty = null;
     }
+
+  }
+
+  /** Remove chosen card from hand and continue play */
+  discard(card: Card): void {
+    const hand = this.currentHands[0];
+    const idx = hand.findIndex(c => c.rank === card.rank && c.suit === card.suit);
+    if (idx >= 0) hand.splice(idx, 1);
+    this.awaitingDiscard = false;
   }
 
   pass(): void {
@@ -72,19 +89,19 @@ export class GameService {
     }
   }
 
-  
+
   // Resolve the current trick using Euchre rules & set next leader
   private resolveTrick(): void {
     if (this.currentTrick.length !== 4 || this.trump === null) return;
-  
+
     // 1) Determine the effective lead suit (accounting for bowers)
     const leadCard = this.currentTrick[0].card;
     const leadSuit = CardUtils.getEffectiveSuit(leadCard, this.trump);
-  
+
     // 2) Initialize winner as the first play
     let winningPlay = this.currentTrick[0];
     let highestWeight = CardUtils.getCardWeight(winningPlay.card, leadSuit, this.trump);
-  
+
     // 3) Loop the rest to find any stronger play
     for (let i = 1; i < 4; i++) {
       const play = this.currentTrick[i];
@@ -94,11 +111,11 @@ export class GameService {
         winningPlay = play;
       }
     }
-  
+
     // 4) Set the leader for the next trick
     this.currentLeader = winningPlay.player;
     console.log(`Player ${winningPlay.player + 1} wins the trick`);
-  
+
     // 5) After a short pause, clear the trick and notify listeners
     // setTimeout(() => {
     //   this.currentTrick = [];
