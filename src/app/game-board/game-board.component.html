@@ -5,13 +5,21 @@
   </div>
   <!-- 1) Trump selection, until trump is chosen -->
   <div class="trump-selection" *ngIf="!gameSvc.trump && gameSvc.currentKitty && !gameSvc.awaitingDiscard">
-    <h3>
-      Trump Up:
-      {{ gameSvc.currentKitty.rank }}
-      {{ suitSymbols[gameSvc.currentKitty.suit] }}
-    </h3>
-    <button (click)="onOrderUp()">Order Up</button>
-    <button (click)="onPass()">Pass</button>
+    <h3>Trump Up:</h3>
+    <div class="card trump-card">
+      <span class="rank">{{ gameSvc.currentKitty.rank }}</span>
+      <span class="suit" [ngClass]="{
+          'red-suit':
+            gameSvc.currentKitty.suit === 'hearts' ||
+            gameSvc.currentKitty.suit === 'diamonds'
+        }">
+        {{ suitSymbols[gameSvc.currentKitty.suit] }}
+      </span>
+    </div>
+    <div class="trump-actions">
+      <button (click)="onOrderUp()">Order Up</button>
+      <button (click)="onPass()">Pass</button>
+    </div>
   </div>
 
   <!-- 2) AI seats, once trump is set -->

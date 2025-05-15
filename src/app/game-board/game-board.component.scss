@@ -19,11 +19,26 @@
   right: 1rem;
   background-color: rgba(255, 255, 255, 0.85);
   border-radius: 4px;
-    padding: 1rem 1.2rem;    /* increase clickable area */
-  font-size: 2rem;         /* make text larger */
+  padding: 1rem 1.2rem;
+  /* increase clickable area */
+  font-size: 2rem;
+  /* make text larger */
   line-height: 1;
   font-weight: bold;
   color: #000;
+}
+
+.trump-selection .trump-card {
+  margin: 0.5rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.trump-actions {
+  margin-top: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
 }
 
 .seat {
