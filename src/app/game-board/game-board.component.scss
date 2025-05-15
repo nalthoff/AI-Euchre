@@ -1,4 +1,6 @@
 .game-board {
+  position: relative;
+  /* make this the containing block for absolute children */
   display: grid;
   grid-template-areas:
     ".    top    ."
@@ -9,6 +11,19 @@
   gap: 1rem;
   padding: 1rem;
   background-color: #006400; // felt-green table background
+}
+
+.trump-indicator {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background-color: rgba(255, 255, 255, 0.85);
+  border-radius: 4px;
+    padding: 1rem 1.2rem;    /* increase clickable area */
+  font-size: 2rem;         /* make text larger */
+  line-height: 1;
+  font-weight: bold;
+  color: #000;
 }
 
 .seat {

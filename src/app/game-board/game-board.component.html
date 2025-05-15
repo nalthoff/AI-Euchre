@@ -1,5 +1,8 @@
 <div class="game-board">
-
+  <!-- Trump indicator in top-right -->
+  <div class="trump-indicator" *ngIf="gameSvc.trump">
+    Trump: {{ suitSymbols[gameSvc.trump] }}
+  </div>
   <!-- 1) Trump selection, until trump is chosen -->
   <div class="trump-selection" *ngIf="!gameSvc.trump && gameSvc.currentKitty && !gameSvc.awaitingDiscard">
     <h3>
@@ -59,21 +62,21 @@
     </p>
     <div class="cards">
       <!-- <div class="card" *ngFor="let card of gameSvc.currentHands[0]" (click)="onCardClick(card)"> -->
-        <div class="card" *ngFor="let card of gameSvc.currentHands[0]"
-          (click)="gameSvc.awaitingDiscard ? onDiscardCard(card) : onCardClick(card)"
-          [class.discarding]="gameSvc.awaitingDiscard">
+      <div class="card" *ngFor="let card of gameSvc.currentHands[0]"
+        (click)="gameSvc.awaitingDiscard ? onDiscardCard(card) : onCardClick(card)"
+        [class.discarding]="gameSvc.awaitingDiscard">
 
-          <span class="rank">{{ card.rank }}</span>
-          <span class="suit" [ngClass]="{
+        <span class="rank">{{ card.rank }}</span>
+        <span class="suit" [ngClass]="{
             'red-suit': card.suit==='hearts'||card.suit==='diamonds'
           }">
-            {{ suitSymbols[card.suit] }}
-          </span>
-        </div>
+          {{ suitSymbols[card.suit] }}
+        </span>
       </div>
     </div>
-    <!-- Restart button once all cards have been played -->
-    <div class="restart-container" *ngIf="gameSvc.currentHands[0]?.length === 0">
-      <button class="new-game-btn" (click)="restart()">New Game</button>
-    </div>
   </div>
+  <!-- Restart button once all cards have been played -->
+  <div class="restart-container" *ngIf="gameSvc.currentHands[0]?.length === 0">
+    <button class="new-game-btn" (click)="restart()">New Game</button>
+  </div>
+</div>
