@@ -78,13 +78,17 @@ export class GameService {
   /** Called when `currentOrderPlayer` orders up */
   orderUpBy(player: number): void {
     if (!this.currentKitty) return;
-    // Set trump suit
+
+    // 1) Set trump to the up-card’s suit
     this.trump = this.currentKitty.suit;
-    // Dealer picks it up & must discard
-    if (player === this.dealerIndex) {
-      this.currentHands[player].push(this.currentKitty);
-      this.awaitingDiscard = true;
-    }
+
+    // 2) Dealer (not the caller) picks up the card
+    this.currentHands[this.dealerIndex].push(this.currentKitty);
+
+    // 3) If you’re the dealer, enter discard mode
+    this.awaitingDiscard = (this.dealerIndex === 0);
+
+    // 4) Remove the kitty and end ordering
     this.currentKitty = null;
     this.orderRound = 0;
   }
