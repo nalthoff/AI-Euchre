@@ -34,7 +34,7 @@ export class GameBoardComponent implements OnInit, OnDestroy {
       this.gameSvc.trickResolved.subscribe(() => {
         this.startTrick();
       })
-    );
+    )
   }
 
   ngOnDestroy() {
@@ -46,20 +46,10 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     return this.gameSvc.currentTrick;
   }
 
-  /** Called when the user clicks “Order Up” */
-  onOrderUp(): void {
-    this.gameSvc.orderUp();
-  }
 
   /** After ordering up, user clicks a card to discard */
   onDiscardCard(card: Card): void {
     this.gameSvc.discard(card);
-    this.startTrick();
-  }
-
-  /** Called when the user clicks “Pass” */
-  onPass(): void {
-    this.gameSvc.pass();
     this.startTrick();
   }
 
@@ -129,4 +119,38 @@ export class GameBoardComponent implements OnInit, OnDestroy {
   get hands(): Card[][] {
     return this.gameSvc.currentHands;
   }
+
+  
+  /** Human or AI orders up */
+  onOrderAction(): void {
+    this.gameSvc.orderUpBy(this.gameSvc.currentOrderPlayer);
+    this.processOrdering();
+  }
+
+  /** Human or AI passes */
+  onPassAction(): void {
+    this.gameSvc.passBy(this.gameSvc.currentOrderPlayer);
+    this.processOrdering();
+  }
+
+  
+  /** Drive the entire order/pass flow, auto-invoking AI until it’s the human’s turn or order phase ends */
+  private processOrdering(): void {
+    // Continue AI turns while in order phase and it's not the human's turn
+    while (this.gameSvc.orderRound > 0 && this.gameSvc.currentOrderPlayer !== 0) {
+      // For now AI always passes; you could call AdviceService.getTrumpAdvice to vary
+      this.gameSvc.passBy(this.gameSvc.currentOrderPlayer);
+    }
+
+    // If the dealer ordered up, we’re now awaiting discard – stop here
+    if (this.gameSvc.awaitingDiscard) {
+      return;
+    }
+
+    // Once orderPhase is 0 and we’re not awaiting discard, start play
+    if (this.gameSvc.orderRound === 0) {
+      this.startTrick();
+    }
+  }
+
 }

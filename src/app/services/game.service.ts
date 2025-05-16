@@ -2,6 +2,7 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';            // ← import
 import { CardUtils } from './card-utils.service';
+import { AiOpponentService } from './ai-opponent.service';
 
 
 export type Suit = 'hearts' | 'diamonds' | 'clubs' | 'spades';
@@ -16,24 +17,41 @@ export interface Card {
   providedIn: 'root'
 })
 export class GameService {
+  constructor(private aiService: AiOpponentService) { }
+
   public currentHands: Card[][] = [];
   public currentKitty: Card | null = null;
   public trump: Suit | null = null;
   public currentTrick: { player: number; card: Card }[] = [];
-  // ← NEW: store the selected AI difficulty
   public difficulty: 'easy' | 'medium' | 'hard' = 'medium';
   public awaitingDiscard = false;
-
   public currentLeader = 0;  // who leads each trick
 
   /** Emits after resolveTrick has cleared and is ready to start the next trick */
-  public trickResolved = new Subject<void>();   // ← new
+  public trickResolved = new Subject<void>();
+
+  /** Index of current dealer (rotates each hand) */
+  public dealerIndex = 0;
+  /** 0 = no order phase, 1 = 1st round, 2 = 2nd round */
+  public orderRound = 0;
+  /** Whose turn it is to order/pass */
+  public currentOrderPlayer = 0;
+  /** How many seats left this round (4 in 1st round, 3 in 2nd) */
+  public turnsLeft = 0;
+  /** Suit turned down after 1st round pass */
+  public turnedDownSuit: Suit | null = null;
 
   // Deal hands, set kitty & reset state
   dealHands(): Card[][] {
+    // 1) Rotate dealer and reset discard state
+    this.dealerIndex = (this.dealerIndex + 1) % 4;
+    this.awaitingDiscard = false;
+
+    // 2) Create and shuffle deck
     const deck = this.createDeck();
     this.shuffle(deck);
 
+    // 3) Deal 5 cards to each player
     const hands: Card[][] = [[], [], [], []];
     for (let r = 0; r < 5; r++) {
       for (let p = 0; p < 4; p++) {
@@ -41,26 +59,34 @@ export class GameService {
       }
     }
 
+    // 4) Set the kitty and initial state
     this.currentKitty = deck.pop()!;
     this.currentHands = hands;
     this.trump = null;
     this.currentTrick = [];
-    this.currentLeader = 0;  // human leads first
+
+    // 5) Determine who leads and order phase
+    this.currentLeader = (this.dealerIndex + 1) % 4;
+    this.orderRound = 1;
+    this.currentOrderPlayer = this.currentLeader;
+    this.turnsLeft = 4;
+    this.turnedDownSuit = null;
+
     return hands;
   }
 
-  orderUp(): void {
-    if (this.currentKitty) {
-      // set trump
-      this.trump = this.currentKitty.suit;
-      // add kitty into dealer’s (player 0) hand
-      this.currentHands[0].push(this.currentKitty);
-      // now require a discard
+  /** Called when `currentOrderPlayer` orders up */
+  orderUpBy(player: number): void {
+    if (!this.currentKitty) return;
+    // Set trump suit
+    this.trump = this.currentKitty.suit;
+    // Dealer picks it up & must discard
+    if (player === this.dealerIndex) {
+      this.currentHands[player].push(this.currentKitty);
       this.awaitingDiscard = true;
-      // clear kitty so it’s no longer shown
-      this.currentKitty = null;
     }
-
+    this.currentKitty = null;
+    this.orderRound = 0;
   }
 
   /** Remove chosen card from hand and continue play */
@@ -71,8 +97,33 @@ export class GameService {
     this.awaitingDiscard = false;
   }
 
-  pass(): void {
-    this.trump = null;
+  /** Called when `currentOrderPlayer` passes */
+  passBy(player: number): void {
+    if (this.orderRound === 0) return;
+    this.turnsLeft--;
+    if (this.turnsLeft > 0) {
+      // Advance to next player (skip dealer in 2nd round)
+      do {
+        this.currentOrderPlayer = (this.currentOrderPlayer + 1) % 4;
+      } while (this.orderRound === 2 && this.currentOrderPlayer === this.dealerIndex);
+    } else {
+      if (this.orderRound === 1) {
+        // Turn down upcard → begin 2nd round
+        this.turnedDownSuit = this.currentKitty?.suit ?? null;
+        this.currentKitty = null;
+        this.orderRound = 2;
+        this.turnsLeft = 3;
+        this.currentOrderPlayer = (this.dealerIndex + 1) % 4;
+      } else {
+        // 2nd round all passed → dealer must order
+        this.orderRound = 0;
+        this.orderUpBy(this.dealerIndex);
+      }
+    }
+    // AUTO-PASS for AI seats
+    if (this.orderRound > 0 && this.currentOrderPlayer !== 0) {
+      this.passBy(this.currentOrderPlayer);
+    }
   }
 
   // Play a card and resolve the trick if all four have played

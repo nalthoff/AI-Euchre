@@ -5,6 +5,14 @@
   </div>
   <!-- 1) Trump selection, until trump is chosen -->
   <div class="trump-selection" *ngIf="!gameSvc.trump && gameSvc.currentKitty && !gameSvc.awaitingDiscard">
+      <div class="order-indicator">
+    <p *ngIf="gameSvc.currentOrderPlayer === 0">
+      Your turn to decide trump
+    </p>
+    <p *ngIf="gameSvc.currentOrderPlayer !== 0">
+      Player {{ gameSvc.currentOrderPlayer + 1 }} is deciding…
+    </p>
+  </div>
     <h3>Trump Up:</h3>
     <div class="card trump-card">
       <span class="rank">{{ gameSvc.currentKitty.rank }}</span>
@@ -17,28 +25,28 @@
       </span>
     </div>
     <div class="trump-actions">
-      <button (click)="onOrderUp()">Order Up</button>
-      <button (click)="onPass()">Pass</button>
+      <button (click)="onOrderAction()">Order Up</button>
+      <button (click)="onPassAction()">Pass</button>
     </div>
   </div>
 
   <!-- 2) AI seats, once trump is set -->
-  <div class="seat top" *ngIf="gameSvc.trump">
-    <h4>Partner</h4>
+  <div class="seat top" *ngIf="gameSvc.currentHands.length > 0">
+    <h4>player 3</h4>
     <div class="cards">
       <div class="card-back" *ngFor="let _ of gameSvc.currentHands[2]">🂠</div>
     </div>
   </div>
-  <div class="seat left" *ngIf="gameSvc.trump">
-    <h4>Left Opponent</h4>
-    <div class="cards">
-      <div class="card-back" *ngFor="let _ of gameSvc.currentHands[3]">🂠</div>
-    </div>
-  </div>
-  <div class="seat right" *ngIf="gameSvc.trump">
-    <h4>Right Opponent</h4>
+  <div class="seat left" *ngIf="gameSvc.currentHands.length > 0">
+    <h4>Player 2</h4>
     <div class="cards">
       <div class="card-back" *ngFor="let _ of gameSvc.currentHands[1]">🂠</div>
+    </div>
+  </div>
+  <div class="seat right" *ngIf="gameSvc.currentHands.length > 0">
+    <h4>Player 4</h4>
+    <div class="cards">
+      <div class="card-back" *ngFor="let _ of gameSvc.currentHands[3]">🂠</div>
     </div>
   </div>
 
@@ -63,7 +71,7 @@
   </div>
 
   <!-- 4) Human hand at bottom; clickable cards -->
-  <div class="seat bottom">
+  <div class="seat bottom" *ngIf="gameSvc.currentHands.length > 0">
     <h4>Your Hand</h4>
     <p *ngIf="gameSvc.awaitingDiscard" class="discard-hint">
       Click a card below to discard
