@@ -28,6 +28,17 @@
   color: #000;
 }
 
+.trump-indicator-inline {
+  margin-top: 0.5rem;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 4px;
+  padding: 0.3rem 0.7rem;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #000;
+  display: inline-block;
+}
+
 .trump-selection .trump-card {
   margin: 0.5rem 0;
   display: flex;

@@ -48,6 +48,8 @@ export class GameService {
   public availableSuits: Suit[] = [];
   public secondRoundChosenSuit: Suit | null = null;
 
+  public trumpCaller: number | null = null;
+
   private logEvent(msg: string) {
     this.gameLog.push(msg);
     // Optionally limit log size
@@ -92,6 +94,7 @@ export class GameService {
     this.handStarted.next();
 
     this.availableSuits = ['hearts', 'diamonds', 'clubs', 'spades'];
+    this.trumpCaller = null;
 
     return hands;
   }
@@ -130,6 +133,7 @@ export class GameService {
     // 4) Remove the kitty and end ordering
     this.currentKitty = null;
     this.orderRound = 0;
+    this.trumpCaller = player;
   }
 
   /** Called when a player chooses a suit in 2nd round */
@@ -141,6 +145,7 @@ export class GameService {
     this.awaitingDiscard = false;
     this.orderRound = 0;
     this.currentKitty = null;
+    this.trumpCaller = player;
   }
 
   /** Remove chosen card from hand and continue play */

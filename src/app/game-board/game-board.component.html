@@ -1,8 +1,4 @@
 <div class="game-board">
-  <!-- Trump indicator in top-right -->
-  <div class="trump-indicator" *ngIf="gameSvc.trump">
-    Trump: {{ suitSymbols[gameSvc.trump] }}
-  </div>
   <!-- 1) Trump selection, until trump is chosen -->
   <div class="trump-selection" *ngIf="!gameSvc.trump && gameSvc.currentKitty && !gameSvc.awaitingDiscard">
       <div class="order-indicator">
@@ -33,9 +29,12 @@
   <!-- 2) AI seats, once trump is set -->
   <div class="seat top" *ngIf="gameSvc.currentHands.length > 0">
     <span class="dealer-indicator" *ngIf="gameSvc.dealerIndex === 2">Dealer</span>
-    <h4>player 3</h4>
+    <h4>Player 3</h4>
     <div class="cards">
       <div class="card-back" *ngFor="let _ of gameSvc.currentHands[2]">🂠</div>
+    </div>
+    <div *ngIf="gameSvc.trumpCaller === 2 && gameSvc.trump" class="trump-indicator-inline">
+      Trump: {{ suitSymbols[gameSvc.trump] }}
     </div>
   </div>
   <div class="seat left" *ngIf="gameSvc.currentHands.length > 0">
@@ -44,12 +43,18 @@
     <div class="cards">
       <div class="card-back" *ngFor="let _ of gameSvc.currentHands[1]">🂠</div>
     </div>
+    <div *ngIf="gameSvc.trumpCaller === 1 && gameSvc.trump" class="trump-indicator-inline">
+      Trump: {{ suitSymbols[gameSvc.trump] }}
+    </div>
   </div>
   <div class="seat right" *ngIf="gameSvc.currentHands.length > 0">
     <span class="dealer-indicator" *ngIf="gameSvc.dealerIndex === 3">Dealer</span>
     <h4>Player 4</h4>
     <div class="cards">
       <div class="card-back" *ngFor="let _ of gameSvc.currentHands[3]">🂠</div>
+    </div>
+    <div *ngIf="gameSvc.trumpCaller === 3 && gameSvc.trump" class="trump-indicator-inline">
+      Trump: {{ suitSymbols[gameSvc.trump] }}
     </div>
   </div>
 
@@ -77,6 +82,9 @@
   <div class="seat bottom" *ngIf="gameSvc.currentHands.length > 0">
     <span class="dealer-indicator" *ngIf="gameSvc.dealerIndex === 0">Dealer</span>
     <h4>Your Hand</h4>
+    <div *ngIf="gameSvc.trumpCaller === 0 && gameSvc.trump" class="trump-indicator-inline">
+      Trump: {{ suitSymbols[gameSvc.trump] }}
+    </div>
     <p *ngIf="gameSvc.awaitingDiscard" class="discard-hint">
       Click a card below to discard
     </p>
