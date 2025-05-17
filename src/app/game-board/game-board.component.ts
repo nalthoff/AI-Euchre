@@ -70,6 +70,27 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     if (nextToPlay !== 0 || !this.gameSvc.trump) {
       return;
     }
+    // Card validation: must follow suit if possible
+    let leadSuit: string | null = null;
+    if (this.currentTrick.length > 0 && this.gameSvc.trump) {
+      leadSuit = CardUtils.getEffectiveSuit(this.currentTrick[0].card, this.gameSvc.trump);
+    }
+    const hand = this.gameSvc.currentHands[0];
+    let validCards: Card[];
+    if (leadSuit) {
+      const followCards = hand.filter(
+        c => CardUtils.getEffectiveSuit(c, this.gameSvc.trump!) === leadSuit
+      );
+      validCards = followCards.length > 0 ? followCards : [...hand];
+    } else {
+      validCards = [...hand];
+    }
+    // Only allow play if card is valid
+    const isValid = validCards.some(c => c.rank === card.rank && c.suit === card.suit);
+    if (!isValid) {
+      // Optionally: provide feedback here (e.g., shake card, flash, etc.)
+      return;
+    }
     // Set flying card state before removing from hand
     this.flyingCard = { card, fromSeat: 0 };
     this.flyingCardAnimation = true;
