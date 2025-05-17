@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';            // ← import
 import { GameService, Card } from '../services/game.service';
 import { AiOpponentService } from '../services/ai-opponent.service';
+import { AdviceService } from '../services/advice.service.service';
 
 @Component({
   selector: 'app-game-board',
@@ -15,6 +16,7 @@ import { AiOpponentService } from '../services/ai-opponent.service';
 export class GameBoardComponent implements OnInit, OnDestroy {
 
   private sub = new Subscription();
+  private handStartedsub = new Subscription();
 
   suitSymbols: Record<string, string> = {
     hearts: '♥',
@@ -25,7 +27,8 @@ export class GameBoardComponent implements OnInit, OnDestroy {
 
   constructor(
     public gameSvc: GameService,
-    private aiService: AiOpponentService
+    private aiService: AiOpponentService,
+    private adviceSvc: AdviceService
   ) { }
 
   ngOnInit() {
@@ -35,10 +38,14 @@ export class GameBoardComponent implements OnInit, OnDestroy {
         this.startTrick();
       })
     )
+    this.handStartedsub.add(
+      this.gameSvc.handStarted.subscribe(() => this.processOrdering())
+    );
   }
 
   ngOnDestroy() {
     this.sub.unsubscribe();
+    this.handStartedsub.unsubscribe();
   }
 
   // expose trick array for template
@@ -120,7 +127,7 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     return this.gameSvc.currentHands;
   }
 
-  
+
   /** Human or AI orders up */
   onOrderAction(): void {
     this.gameSvc.orderUpBy(this.gameSvc.currentOrderPlayer);
@@ -133,13 +140,21 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     this.processOrdering();
   }
 
-  
+
   /** Drive the entire order/pass flow, auto-invoking AI until it’s the human’s turn or order phase ends */
   private processOrdering(): void {
     // Continue AI turns while in order phase and it's not the human's turn
     while (this.gameSvc.orderRound > 0 && this.gameSvc.currentOrderPlayer !== 0) {
-      // For now AI always passes; you could call AdviceService.getTrumpAdvice to vary
-      this.gameSvc.passBy(this.gameSvc.currentOrderPlayer);
+      const advice = this.adviceSvc.getTrumpAdvice(
+        this.gameSvc.currentHands[this.gameSvc.currentOrderPlayer],
+        this.gameSvc.currentKitty!,
+        this.gameSvc.difficulty
+      );
+      if (advice.action === 'order') {
+        this.gameSvc.orderUpBy(this.gameSvc.currentOrderPlayer);
+      } else {
+        this.gameSvc.passBy(this.gameSvc.currentOrderPlayer);
+      }
     }
 
     // If the dealer ordered up, we’re now awaiting discard – stop here
@@ -151,6 +166,10 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     if (this.gameSvc.orderRound === 0) {
       this.startTrick();
     }
+  }
+
+  get gameLog() {
+    return this.gameSvc.gameLog;
   }
 
 }

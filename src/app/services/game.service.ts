@@ -19,6 +19,8 @@ export interface Card {
 export class GameService {
   constructor(private aiService: AiOpponentService) { }
 
+  public handStarted = new Subject<void>();
+
   public currentHands: Card[][] = [];
   public currentKitty: Card | null = null;
   public trump: Suit | null = null;
@@ -40,6 +42,14 @@ export class GameService {
   public turnsLeft = 0;
   /** Suit turned down after 1st round pass */
   public turnedDownSuit: Suit | null = null;
+
+  public gameLog: string[] = [];
+
+  private logEvent(msg: string) {
+    this.gameLog.push(msg);
+    // Optionally limit log size
+    if (this.gameLog.length > 100) this.gameLog.shift();
+  }
 
   // Deal hands, set kitty & reset state
   dealHands(): Card[][] {
@@ -65,12 +75,18 @@ export class GameService {
     this.trump = null;
     this.currentTrick = [];
 
-    // 5) Determine who leads and order phase
+    // 5) Set the first leader to the left of the dealer
     this.currentLeader = (this.dealerIndex + 1) % 4;
     this.orderRound = 1;
     this.currentOrderPlayer = this.currentLeader;
     this.turnsLeft = 4;
     this.turnedDownSuit = null;
+
+    this.gameLog = [];
+    this.logEvent(`New hand dealt. Dealer: Player ${this.dealerIndex + 1}`);
+
+    // let everyone know a new hand is on the table
+    this.handStarted.next();
 
     return hands;
   }
@@ -78,6 +94,7 @@ export class GameService {
   /** Called when `currentOrderPlayer` orders up */
   orderUpBy(player: number): void {
     if (!this.currentKitty) return;
+    this.logEvent(`Player ${player + 1} orders up ${this.currentKitty.suit.toUpperCase()}`);
 
     // 1) Set trump to the up-card’s suit
     this.trump = this.currentKitty.suit;
@@ -104,6 +121,7 @@ export class GameService {
   /** Called when `currentOrderPlayer` passes */
   passBy(player: number): void {
     if (this.orderRound === 0) return;
+    this.logEvent(`Player ${player + 1} passes`);
     this.turnsLeft--;
     if (this.turnsLeft > 0) {
       // Advance to next player (skip dealer in 2nd round)
@@ -169,7 +187,7 @@ export class GameService {
 
     // 4) Set the leader for the next trick
     this.currentLeader = winningPlay.player;
-    console.log(`Player ${winningPlay.player + 1} wins the trick`);
+    this.logEvent(`Player ${winningPlay.player + 1} wins the trick`);
 
     // 5) After a short pause, clear the trick and notify listeners
     // setTimeout(() => {

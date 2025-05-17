@@ -99,4 +99,12 @@
   <div class="restart-container" *ngIf="gameSvc.currentHands[0]?.length === 0">
     <button class="new-game-btn" (click)="restart()">New Game</button>
   </div>
+
+  <!-- 5) Game log panel -->
+  <div class="game-log-panel" *ngIf="gameSvc.currentHands.length > 0 && gameSvc.currentHands[0] && gameSvc.currentHands[0].length > 0">
+    <h4>Game Log</h4>
+    <ul class="game-log-list">
+      <li *ngFor="let entry of gameLog.slice(-10)">{{ entry }}</li>
+    </ul>
+  </div>
 </div>
