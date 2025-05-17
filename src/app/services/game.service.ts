@@ -45,6 +45,9 @@ export class GameService {
 
   public gameLog: string[] = [];
 
+  public availableSuits: Suit[] = [];
+  public secondRoundChosenSuit: Suit | null = null;
+
   private logEvent(msg: string) {
     this.gameLog.push(msg);
     // Optionally limit log size
@@ -88,6 +91,8 @@ export class GameService {
     // let everyone know a new hand is on the table
     this.handStarted.next();
 
+    this.availableSuits = ['hearts', 'diamonds', 'clubs', 'spades'];
+
     return hands;
   }
 
@@ -127,6 +132,17 @@ export class GameService {
     this.orderRound = 0;
   }
 
+  /** Called when a player chooses a suit in 2nd round */
+  orderUpSecondRound(player: number, suit: Suit): void {
+    this.logEvent(`Player ${player + 1} orders up ${suit.toUpperCase()} (2nd round)`);
+    this.trump = suit;
+    this.secondRoundChosenSuit = suit;
+    // Dealer does not pick up kitty in 2nd round
+    this.awaitingDiscard = false;
+    this.orderRound = 0;
+    this.currentKitty = null;
+  }
+
   /** Remove chosen card from hand and continue play */
   discard(card: Card): void {
     const hand = this.currentHands[0];
@@ -153,16 +169,17 @@ export class GameService {
         this.orderRound = 2;
         this.turnsLeft = 3;
         this.currentOrderPlayer = (this.dealerIndex + 1) % 4;
+        // Remove the turned down suit from available suits
+        this.availableSuits = (['hearts', 'diamonds', 'clubs', 'spades'].filter(s => s !== this.turnedDownSuit) as Suit[]);
       } else {
-        // 2nd round all passed → dealer must order
+        // 2nd round all passed → dealer must order (force pick)
         this.orderRound = 0;
-        this.orderUpBy(this.dealerIndex);
+        // Forcing dealer to pick the first available suit
+        const suit = this.availableSuits[0];
+        this.orderUpSecondRound(this.dealerIndex, suit);
       }
     }
-    // AUTO-PASS for AI seats
-    if (this.orderRound > 0 && this.currentOrderPlayer !== 0) {
-      this.passBy(this.currentOrderPlayer);
-    }
+    // AUTO-PASS for AI seats (handled in processOrdering)
   }
 
   // Play a card and resolve the trick if all four have played

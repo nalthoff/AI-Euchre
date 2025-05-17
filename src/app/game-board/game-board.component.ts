@@ -4,6 +4,7 @@ import { Subscription } from 'rxjs';            // ← import
 import { GameService, Card } from '../services/game.service';
 import { AiOpponentService } from '../services/ai-opponent.service';
 import { AdviceService } from '../services/advice.service.service';
+import { CardUtils } from '../services/card-utils.service';
 
 @Component({
   selector: 'app-game-board',
@@ -140,20 +141,54 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     this.processOrdering();
   }
 
+  get availableSuits() {
+    return this.gameSvc.availableSuits;
+  }
+
+  // For 2nd round, store the suit the human selects
+  selectedSecondRoundSuit: string | null = null;
+
+  // Human selects a suit for the 2nd round of ordering
+  onOrderSecondRound(suit: string) {
+    this.gameSvc.orderUpSecondRound(0, suit as any);
+    this.processOrdering();
+  }
 
   /** Drive the entire order/pass flow, auto-invoking AI until it’s the human’s turn or order phase ends */
   private processOrdering(): void {
-    // Continue AI turns while in order phase and it's not the human's turn
+    // 2nd round: let AI pick a suit or pass
     while (this.gameSvc.orderRound > 0 && this.gameSvc.currentOrderPlayer !== 0) {
-      const advice = this.adviceSvc.getTrumpAdvice(
-        this.gameSvc.currentHands[this.gameSvc.currentOrderPlayer],
-        this.gameSvc.currentKitty!,
-        this.gameSvc.difficulty
-      );
-      if (advice.action === 'order') {
-        this.gameSvc.orderUpBy(this.gameSvc.currentOrderPlayer);
+      if (this.gameSvc.orderRound === 2) {
+        // AI picks best suit or passes
+        let bestSuit: string | null = null;
+        let bestScore = -1;
+        for (const suit of this.gameSvc.availableSuits) {
+          // Count trump cards in hand for this suit
+          const hand = this.gameSvc.currentHands[this.gameSvc.currentOrderPlayer];
+          const trumpCount = hand.filter(c => CardUtils.getEffectiveSuit(c, suit) === suit).length;
+          if (trumpCount > bestScore) {
+            bestScore = trumpCount;
+            bestSuit = suit;
+          }
+        }
+        // Simple AI: order if at least 2 trump, else pass
+        if (bestScore >= 2 && bestSuit) {
+          this.gameSvc.orderUpSecondRound(this.gameSvc.currentOrderPlayer, bestSuit as any);
+        } else {
+          this.gameSvc.passBy(this.gameSvc.currentOrderPlayer);
+        }
       } else {
-        this.gameSvc.passBy(this.gameSvc.currentOrderPlayer);
+        // 1st round: use existing advice logic
+        const advice = this.adviceSvc.getTrumpAdvice(
+          this.gameSvc.currentHands[this.gameSvc.currentOrderPlayer],
+          this.gameSvc.currentKitty!,
+          this.gameSvc.difficulty
+        );
+        if (advice.action === 'order') {
+          this.gameSvc.orderUpBy(this.gameSvc.currentOrderPlayer);
+        } else {
+          this.gameSvc.passBy(this.gameSvc.currentOrderPlayer);
+        }
       }
     }
 
