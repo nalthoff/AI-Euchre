@@ -249,4 +249,37 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     return this.currentTrick.find(play => play.player === seat)?.card;
   }
 
+  // Returns the list of valid cards the human can play (for highlighting)
+  get validPlayableCards(): Card[] {
+    // Only relevant if it's the human's turn and not discarding
+    const nextToPlay = (this.gameSvc.currentLeader + this.currentTrick.length) % 4;
+    if (nextToPlay !== 0 || !this.gameSvc.trump || this.gameSvc.awaitingDiscard) {
+      return [];
+    }
+    let leadSuit: string | null = null;
+    if (this.currentTrick.length > 0 && this.gameSvc.trump) {
+      leadSuit = CardUtils.getEffectiveSuit(this.currentTrick[0].card, this.gameSvc.trump);
+    }
+    const hand = this.gameSvc.currentHands[0];
+    if (!hand) return [];
+    if (leadSuit) {
+      const followCards = hand.filter(
+        c => CardUtils.getEffectiveSuit(c, this.gameSvc.trump!) === leadSuit
+      );
+      return followCards.length > 0 ? followCards : [...hand];
+    } else {
+      return [...hand];
+    }
+  }
+
+  // Used in template to check if a card is valid to play
+  isCardValidToPlay(card: Card): boolean {
+    return this.validPlayableCards.some(c => c.rank === card.rank && c.suit === card.suit);
+  }
+
+  // Used in *ngFor trackBy for cards
+  trackCard(index: number, card: Card): string {
+    return card.suit + '-' + card.rank;
+  }
+
 }

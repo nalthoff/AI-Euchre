@@ -114,9 +114,10 @@
     </p>
     <div class="cards">
       <!-- <div class="card" *ngFor="let card of gameSvc.currentHands[0]" (click)="onCardClick(card)"> -->
-      <div class="card" *ngFor="let card of gameSvc.currentHands[0]"
+      <div class="card" *ngFor="let card of gameSvc.currentHands[0]; trackBy: trackCard"
         (click)="gameSvc.awaitingDiscard ? onDiscardCard(card) : onCardClick(card)"
-        [class.discarding]="gameSvc.awaitingDiscard">
+        [class.discarding]="gameSvc.awaitingDiscard"
+        [class.valid-playable]="!gameSvc.awaitingDiscard && isCardValidToPlay(card)">
 
         <span class="rank">{{ card.rank }}</span>
         <span class="suit" [ngClass]="{
