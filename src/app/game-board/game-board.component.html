@@ -59,7 +59,7 @@
   </div>
 
   <!-- 3) Trick area in center -->
-  <div class="trick-area main" *ngIf="currentTrick.length" (click)="onAdvanceTrick()">
+  <div class="trick-area main" *ngIf="currentTrick.length">
     <h4>Current Trick</h4>
     <div class="trick-cards-plus">
       <div class="card-played plus-top" *ngIf="getTrickCard(2)">
@@ -99,7 +99,7 @@
         </span>
       </div>
     </div>
-    <p class="advance-hint">Click here to advance to the next trick</p>
+    <button class="advance-hint" *ngIf="currentTrick.length === 4" (click)="onAdvanceTrick()">Advance to the next trick</button>
   </div>
 
   <!-- 4) Human hand at bottom; clickable cards -->

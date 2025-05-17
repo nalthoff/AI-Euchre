@@ -17,6 +17,7 @@ import { CardUtils } from '../services/card-utils.service';
 export class GameBoardComponent implements OnInit, OnDestroy {
   private sub = new Subscription();
   private handStartedsub = new Subscription();
+  private autoAdvanceTimeout: any = null;
 
   suitSymbols: Record<string, string> = {
     hearts: '♥',
@@ -49,10 +50,24 @@ export class GameBoardComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.sub.unsubscribe();
     this.handStartedsub.unsubscribe();
+    if (this.autoAdvanceTimeout) {
+      clearTimeout(this.autoAdvanceTimeout);
+    }
   }
 
   // expose trick array for template
   get currentTrick() {
+    // If trick is full, start auto-advance timer
+    if (this.gameSvc.currentTrick.length === 4 && !this.autoAdvanceTimeout) {
+      this.autoAdvanceTimeout = setTimeout(() => {
+        this.onAdvanceTrick();
+      }, 5000);
+    }
+    // If trick is not full, clear any pending timer
+    if (this.gameSvc.currentTrick.length < 4 && this.autoAdvanceTimeout) {
+      clearTimeout(this.autoAdvanceTimeout);
+      this.autoAdvanceTimeout = null;
+    }
     return this.gameSvc.currentTrick;
   }
 
@@ -148,6 +163,10 @@ export class GameBoardComponent implements OnInit, OnDestroy {
 
   /** Clear the laid cards and start next trick on user click */
   onAdvanceTrick(): void {
+    if (this.autoAdvanceTimeout) {
+      clearTimeout(this.autoAdvanceTimeout);
+      this.autoAdvanceTimeout = null;
+    }
     this.gameSvc.currentTrick = [];
     this.startTrick();
   }
