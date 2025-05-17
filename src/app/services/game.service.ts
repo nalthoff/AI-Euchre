@@ -105,6 +105,23 @@ export class GameService {
     // 3) If you’re the dealer, enter discard mode
     this.awaitingDiscard = (this.dealerIndex === 0);
 
+    // AI dealer: auto-discard worst card
+    if (this.dealerIndex !== 0 && this.currentHands[this.dealerIndex].length === 6) {
+      const hand = this.currentHands[this.dealerIndex];
+      // Use getCardWeight with trump as both leadSuit and trump for worst card
+      let minWeight = Infinity;
+      let minIdx = 0;
+      for (let i = 0; i < hand.length; i++) {
+        const w = CardUtils.getCardWeight(hand[i], this.trump, this.trump);
+        if (w < minWeight) {
+          minWeight = w;
+          minIdx = i;
+        }
+      }
+      const discarded = hand.splice(minIdx, 1)[0];
+      this.logEvent(`Player ${this.dealerIndex + 1} discards ${discarded.rank} of ${discarded.suit}`);
+    }
+
     // 4) Remove the kitty and end ordering
     this.currentKitty = null;
     this.orderRound = 0;
