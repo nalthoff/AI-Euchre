@@ -59,18 +59,42 @@
   </div>
 
   <!-- 3) Trick area in center -->
-  <!-- <div class="trick-area main" *ngIf="currentTrick.length"> -->
   <div class="trick-area main" *ngIf="currentTrick.length" (click)="onAdvanceTrick()">
     <h4>Current Trick</h4>
-    <div class="cards">
-      <div class="card-played" *ngFor="let play of currentTrick">
-        <span class="seat-label">P{{ play.player + 1 }}</span>
-        <span class="card" [ngClass]="{'played-card': true}">
-          {{ play.card.rank }}
-          <span class="suit" [ngClass]="{
-              'red-suit': play.card.suit==='hearts'||play.card.suit==='diamonds'
-            }">
-            {{ suitSymbols[play.card.suit] }}
+    <div class="trick-cards-plus">
+      <div class="card-played plus-top" *ngIf="getTrickCard(2)">
+        <span class="seat-label">P3</span>
+        <span class="card played-card">
+          {{ getTrickCard(2)?.rank }}
+          <span class="suit" [ngClass]="{'red-suit': getTrickCard(2)?.suit==='hearts'||getTrickCard(2)?.suit==='diamonds'}">
+            {{ suitSymbols[getTrickCard(2)?.suit || ''] }}
+          </span>
+        </span>
+      </div>
+      <div class="card-played plus-left" *ngIf="getTrickCard(1)">
+        <span class="seat-label">P2</span>
+        <span class="card played-card">
+          {{ getTrickCard(1)?.rank }}
+          <span class="suit" [ngClass]="{'red-suit': getTrickCard(1)?.suit==='hearts'||getTrickCard(1)?.suit==='diamonds'}">
+            {{ suitSymbols[getTrickCard(1)?.suit || ''] }}
+          </span>
+        </span>
+      </div>
+      <div class="card-played plus-bottom" *ngIf="getTrickCard(0)">
+        <span class="seat-label">P1</span>
+        <span class="card played-card">
+          {{ getTrickCard(0)?.rank }}
+          <span class="suit" [ngClass]="{'red-suit': getTrickCard(0)?.suit==='hearts'||getTrickCard(0)?.suit==='diamonds'}">
+            {{ suitSymbols[getTrickCard(0)?.suit || ''] }}
+          </span>
+        </span>
+      </div>
+      <div class="card-played plus-right" *ngIf="getTrickCard(3)">
+        <span class="seat-label">P4</span>
+        <span class="card played-card">
+          {{ getTrickCard(3)?.rank }}
+          <span class="suit" [ngClass]="{'red-suit': getTrickCard(3)?.suit==='hearts'||getTrickCard(3)?.suit==='diamonds'}">
+            {{ suitSymbols[getTrickCard(3)?.suit || ''] }}
           </span>
         </span>
       </div>
@@ -127,5 +151,15 @@
       </button>
       <button (click)="onPassAction()">Pass</button>
     </div>
+  </div>
+
+  <!-- Flying card animation overlay -->
+  <div *ngIf="flyingCard" class="flying-card" [ngClass]="'from-seat-' + flyingCard.fromSeat" [class.animate]="flyingCardAnimation">
+    <span class="card">
+      <span class="rank">{{ flyingCard.card.rank }}</span>
+      <span class="suit" [ngClass]="{'red-suit': flyingCard.card.suit==='hearts'||flyingCard.card.suit==='diamonds'}">
+        {{ suitSymbols[flyingCard.card.suit] }}
+      </span>
+    </span>
   </div>
 </div>

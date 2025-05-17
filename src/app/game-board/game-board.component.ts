@@ -15,7 +15,6 @@ import { CardUtils } from '../services/card-utils.service';
 })
 
 export class GameBoardComponent implements OnInit, OnDestroy {
-
   private sub = new Subscription();
   private handStartedsub = new Subscription();
 
@@ -25,6 +24,9 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     clubs: '♣',
     spades: '♠'
   };
+
+  flyingCard: { card: Card, fromSeat: number } | null = null;
+  flyingCardAnimation = false;
 
   constructor(
     public gameSvc: GameService,
@@ -68,8 +70,15 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     if (nextToPlay !== 0 || !this.gameSvc.trump) {
       return;
     }
-    this.gameSvc.playCard(0, card);
-    this.continueAIMoves();
+    // Set flying card state before removing from hand
+    this.flyingCard = { card, fromSeat: 0 };
+    this.flyingCardAnimation = true;
+    setTimeout(() => {
+      this.flyingCardAnimation = false;
+      this.flyingCard = null;
+      this.gameSvc.playCard(0, card);
+      this.continueAIMoves();
+    }, 600); // Animation duration
   }
 
   // Begin a new trick: let AI start if leader isn't human
@@ -100,12 +109,19 @@ export class GameBoardComponent implements OnInit, OnDestroy {
       if (!aiCard) {
         break;
       }
-      this.gameSvc.playCard(next, aiCard);
-
-      // if that play filled the trick, let resolveTrick() finish then kick off next via trickResolved
-      if (this.gameSvc.currentTrick.length === 4) {
-        break;
-      }
+      // Animate AI card play
+      this.flyingCard = { card: aiCard, fromSeat: next };
+      this.flyingCardAnimation = true;
+      setTimeout(() => {
+        this.flyingCardAnimation = false;
+        this.flyingCard = null;
+        this.gameSvc.playCard(next, aiCard);
+        // If that play filled the trick, let resolveTrick() finish then kick off next via trickResolved
+        if (this.gameSvc.currentTrick.length < 4) {
+          this.continueAIMoves();
+        }
+      }, 600);
+      break;
     }
   }
 
@@ -205,6 +221,11 @@ export class GameBoardComponent implements OnInit, OnDestroy {
 
   get gameLog() {
     return this.gameSvc.gameLog;
+  }
+
+  // Utility: get the played card for a seat (0=bottom, 1=left, 2=top, 3=right)
+  getTrickCard(seat: number) {
+    return this.currentTrick.find(play => play.player === seat)?.card;
   }
 
 }
