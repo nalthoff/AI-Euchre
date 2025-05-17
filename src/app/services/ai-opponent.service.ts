@@ -4,16 +4,6 @@ import { CardUtils } from './card-utils.service';
 
 @Injectable({ providedIn: 'root' })
 export class AiOpponentService {
-  // Rank order mapping for weight calculations
-  private rankOrder: Record<Rank, number> = {
-    '9': 1,
-    '10': 2,
-    'J': 3,
-    'Q': 4,
-    'K': 5,
-    'A': 6
-  };
-
   /**
    * Returns an AI move based on difficulty:
    * - easy: random valid play
@@ -78,7 +68,7 @@ export class AiOpponentService {
         if (trumpCards.length >= 3) {
           // choose highest trump
           choice = trumpCards.reduce((a, b) =>
-            this.rankOrder[a.rank] > this.rankOrder[b.rank] ? a : b
+            CardUtils.rankOrder[a.rank] > CardUtils.rankOrder[b.rank] ? a : b
           );
           return choice;
         }

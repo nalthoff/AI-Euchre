@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';            // ← import
 import { GameService, Card } from '../services/game.service';
 import { AiOpponentService } from '../services/ai-opponent.service';
-import { AdviceService } from '../services/advice.service.service';
+import { AdviceService } from '../services/advice.service';
 import { CardUtils } from '../services/card-utils.service';
 
 @Component({
