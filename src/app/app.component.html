@@ -1,4 +1,10 @@
 <div class="app-container">
-  <app-new-game></app-new-game>
-  <app-game-board></app-game-board>
+  <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+    <app-new-game></app-new-game>
+    <label style="display: flex; align-items: center; gap: 0.3rem; font-size: 1rem;">
+      <input type="checkbox" [(ngModel)]="autoAdvance" />
+      Auto-advance trick (5s)
+    </label>
+  </div>
+  <app-game-board [autoAdvance]="autoAdvance"></app-game-board>
 </div>

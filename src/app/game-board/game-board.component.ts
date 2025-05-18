@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';            // ← import
 import { GameService, Card } from '../services/game.service';
@@ -15,6 +15,8 @@ import { CardUtils } from '../services/card-utils.service';
 })
 
 export class GameBoardComponent implements OnInit, OnDestroy {
+  @Input() autoAdvance = true;
+
   private sub = new Subscription();
   private handStartedsub = new Subscription();
   private autoAdvanceTimeout: any = null;
@@ -57,14 +59,16 @@ export class GameBoardComponent implements OnInit, OnDestroy {
 
   // expose trick array for template
   get currentTrick() {
-    // If trick is full, start auto-advance timer
-    if (this.gameSvc.currentTrick.length === 4 && !this.autoAdvanceTimeout) {
-      this.autoAdvanceTimeout = setTimeout(() => {
-        this.onAdvanceTrick();
-      }, 5000);
+    // If trick is full, start auto-advance timer if enabled
+    if (this.gameSvc.currentTrick.length === 4) {
+      if (this.autoAdvance && !this.autoAdvanceTimeout) {
+        this.autoAdvanceTimeout = setTimeout(() => {
+          this.onAdvanceTrick();
+        }, 5000);
+      }
     }
-    // If trick is not full, clear any pending timer
-    if (this.gameSvc.currentTrick.length < 4 && this.autoAdvanceTimeout) {
+    // If trick is not full or autoAdvance is off, clear any pending timer
+    if ((this.gameSvc.currentTrick.length < 4 || !this.autoAdvance) && this.autoAdvanceTimeout) {
       clearTimeout(this.autoAdvanceTimeout);
       this.autoAdvanceTimeout = null;
     }
@@ -132,7 +136,12 @@ export class GameBoardComponent implements OnInit, OnDestroy {
         // back to you—stop AI
         break;
       }
-
+      // Check if this AI has any cards left
+      const hand = this.gameSvc.currentHands[next];
+      if (!hand || hand.length === 0) {
+        // Hand is over, stop AI
+        break;
+      }
       const aiCard = this.aiService.getAIMove(
         next,
         this.gameSvc.currentHands,
@@ -140,11 +149,6 @@ export class GameBoardComponent implements OnInit, OnDestroy {
         this.gameSvc.trump!,
         this.gameSvc.difficulty
       );
-
-      // if *this* AI has no cards, the hand is truly over—stop all play
-      if (!aiCard) {
-        break;
-      }
       // Animate AI card play
       this.flyingCard = { card: aiCard, fromSeat: next };
       this.flyingCardAnimation = true;
@@ -175,8 +179,7 @@ export class GameBoardComponent implements OnInit, OnDestroy {
   restart(): void {
     // Preserve previously chosen difficulty
     this.gameSvc.dealHands();
-    // If you want AI to lead immediately (e.g. if leader ≠ 0), kick off:
-    this.startTrick();
+    // Do NOT call this.startTrick() here; let the ordering phase begin naturally
   }
 
   // Dynamically return whatever the service currently has

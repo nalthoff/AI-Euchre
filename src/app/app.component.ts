@@ -11,11 +11,9 @@ import { GameBoardComponent } from './game-board/game-board.component';
     NewGameComponent,           // <app-new-game>
     GameBoardComponent          // <app-game-board>
   ],
-  template: `
-    <div class="app-container">
-      <app-new-game></app-new-game>
-      <app-game-board></app-game-board>
-    </div>
-  `
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.scss']
 })
-export class AppComponent {}
+export class AppComponent {
+  autoAdvance = true;
+}
