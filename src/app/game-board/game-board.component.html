@@ -1,4 +1,15 @@
 <div class="game-board">
+  <!-- DEBUG: Show current trump caller and suit for troubleshooting -->
+  <div *ngIf="gameSvc.trumpCaller !== null && gameSvc.trump" class="trump-indicator">
+    Trump called by Player {{ gameSvc.trumpCaller + 1 }}: {{ suitSymbols[gameSvc.trump] }}
+  </div>
+
+  <!-- Score bar displaying team scores -->
+  <div class="score-bar">
+    <span class="team-score">Us: <b>{{ gameSvc.teamScores[0] }}</b></span>
+    <span class="team-score">Them: <b>{{ gameSvc.teamScores[1] }}</b></span>
+  </div>
+
   <!-- 1) Trump selection, until trump is chosen -->
   <div class="trump-selection" *ngIf="!gameSvc.trump && gameSvc.currentKitty && !gameSvc.awaitingDiscard">
       <div class="order-indicator">

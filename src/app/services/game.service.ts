@@ -53,6 +53,12 @@ export class GameService {
   /** Number of tricks won by each player in the current hand */
   public tricksWon: number[] = [0, 0, 0, 0];
 
+  /** Team scores: [team 0 (players 0 & 2), team 1 (players 1 & 3)] */
+  public teamScores: number[] = [0, 0];
+
+  /** Hand sizes at the start of the hand (for lone hand detection) */
+  private handStartHandSizes: number[] = [0, 0, 0, 0];
+
   private logEvent(msg: string) {
     this.gameLog.push(msg);
     // Optionally limit log size
@@ -99,6 +105,10 @@ export class GameService {
     this.availableSuits = ['hearts', 'diamonds', 'clubs', 'spades'];
     this.trumpCaller = null;
     this.tricksWon = [0, 0, 0, 0];
+    // Only reset scores if this is a new game, not a new hand
+    if (!this.teamScores) this.teamScores = [0, 0];
+    // Store hand sizes for lone hand detection
+    this.handStartHandSizes = this.currentHands.map(h => h.length);
 
     return hands;
   }
@@ -233,11 +243,73 @@ export class GameService {
     this.tricksWon[winningPlay.player]++;
     this.logEvent(`Player ${winningPlay.player + 1} wins the trick`);
 
-    // 5) After a short pause, clear the trick and notify listeners
-    // setTimeout(() => {
-    //   this.currentTrick = [];
-    //   this.trickResolved.next();
-    // }, 1500);
+    // If all tricks for the hand are done, score the hand
+    const handOver = this.currentHands.every(hand => hand.length === 0);
+    if (handOver) {
+      this.scoreHand();
+    }
+  }
+
+  /**
+   * Score the hand according to standard euchre rules.
+   * - 1pt: makers win 3-4 tricks
+   * - 2pt: makers win all 5 (march)
+   * - 2pt: defenders win 3+ (euchre)
+   * - 4pt: lone hand march (makers alone)
+   * - 4pt: lone defender euchres lone maker
+   */
+  private scoreHand(): void {
+    // Determine teams: 0 & 2 vs 1 & 3
+    const team0Tricks = this.tricksWon[0] + this.tricksWon[2];
+    const team1Tricks = this.tricksWon[1] + this.tricksWon[3];
+    const maker = this.trumpCaller!;
+    const makerTeam = maker % 2; // 0 for team 0, 1 for team 1
+    const defenderTeam = 1 - makerTeam;
+    const makerTricks = makerTeam === 0 ? team0Tricks : team1Tricks;
+    const defenderTricks = defenderTeam === 0 ? team0Tricks : team1Tricks;
+    // Lone hand detection: use handStartHandSizes snapshot
+    const loneMaker = (this.handStartHandSizes[maker] === 5 && this.handStartHandSizes[(maker+2)%4] === 0);
+    const loneDefender = (this.handStartHandSizes[defenderTeam] === 5 && this.handStartHandSizes[(defenderTeam+2)%4] === 0);
+
+    let points = 0;
+    let scoredTeam = makerTeam;
+    let msg = '';
+    if (makerTricks >= 3 && makerTricks < 5) {
+      // Makers win 3 or 4
+      points = 1;
+      msg = `Makers (Team ${makerTeam+1}) score 1 point.`;
+    } else if (makerTricks === 5) {
+      // March
+      if (loneMaker) {
+        points = 4;
+        msg = `Lone maker (Player ${maker+1}) wins all 5 tricks! Team ${makerTeam+1} scores 4 points.`;
+      } else {
+        points = 2;
+        msg = `Makers (Team ${makerTeam+1}) win all 5 tricks (march) for 2 points.`;
+      }
+    } else if (defenderTricks >= 3) {
+      // Euchre
+      if (loneDefender) {
+        points = 4;
+        scoredTeam = defenderTeam;
+        msg = `Lone defender (Player ${defenderTeam+1}) euchres the makers! Team ${defenderTeam+1} scores 4 points.`;
+      } else {
+        points = 2;
+        scoredTeam = defenderTeam;
+        msg = `Defenders (Team ${defenderTeam+1}) euchre the makers for 2 points.`;
+      }
+    }
+    this.teamScores[scoredTeam] += points;
+    this.logEvent(msg + ` [Score: ${this.teamScores[0]} - ${this.teamScores[1]}]`);
+    // Optionally: check for game over (10 points)
+    if (this.teamScores[scoredTeam] >= 10) {
+      this.logEvent(`Team ${scoredTeam+1} wins the game!`);
+      // Optionally: reset scores or show dialog
+    }
+    // Start new hand
+    setTimeout(() => {
+      this.dealHands();
+    }, 2000);
   }
 
   // Create a standard 24-card Euchre deck
