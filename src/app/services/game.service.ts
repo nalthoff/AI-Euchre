@@ -4,10 +4,11 @@ import { Subject } from 'rxjs';            // ← import
 import { CardUtils } from './card-utils.service';
 import { AiOpponentService } from './ai-opponent.service';
 
-
+// Type definitions for suits and ranks in Euchre
 export type Suit = 'hearts' | 'diamonds' | 'clubs' | 'spades';
 export type Rank = '9' | '10' | 'J' | 'Q' | 'K' | 'A';
 
+// Card interface for a Euchre card
 export interface Card {
   suit: Suit;
   rank: Rank;
@@ -19,14 +20,22 @@ export interface Card {
 export class GameService {
   constructor(private aiService: AiOpponentService) { }
 
+  // Emits when a new hand is started
   public handStarted = new Subject<void>();
 
+  // Current hands for each player (array of 4 hands)
   public currentHands: Card[][] = [];
+  // The kitty card (face up card for trump selection)
   public currentKitty: Card | null = null;
+  // The current trump suit
   public trump: Suit | null = null;
+  // Cards played in the current trick
   public currentTrick: { player: number; card: Card }[] = [];
+  // AI difficulty setting
   public difficulty: 'easy' | 'medium' | 'hard' = 'medium';
+  // Whether the dealer is awaiting a discard
   public awaitingDiscard = false;
+  // Player index who leads the current trick
   public currentLeader = 0;  // who leads each trick
 
   /** Emits after resolveTrick has cleared and is ready to start the next trick */
@@ -43,11 +52,15 @@ export class GameService {
   /** Suit turned down after 1st round pass */
   public turnedDownSuit: Suit | null = null;
 
+  // Log of game events for display
   public gameLog: string[] = [];
 
+  // Suits available for selection in the second round
   public availableSuits: Suit[] = [];
+  // Suit chosen in the second round
   public secondRoundChosenSuit: Suit | null = null;
 
+  // Player index who called trump
   public trumpCaller: number | null = null;
 
   /** Number of tricks won by each player in the current hand */
@@ -59,13 +72,21 @@ export class GameService {
   /** Hand sizes at the start of the hand (for lone hand detection) */
   private handStartHandSizes: number[] = [0, 0, 0, 0];
 
+  /**
+   * Add a message to the game log, trimming if necessary.
+   * @param msg The message to log
+   */
   private logEvent(msg: string) {
     this.gameLog.push(msg);
     // Optionally limit log size
     if (this.gameLog.length > 100) this.gameLog.shift();
   }
 
-  // Deal hands, set kitty & reset state
+  /**
+   * Deal hands to all players, set the kitty, and reset state for a new hand.
+   * Rotates the dealer, shuffles the deck, and deals 5 cards to each player.
+   * @returns The hands dealt to each player
+   */
   dealHands(): Card[][] {
     // 1) Rotate dealer and reset discard state
     this.dealerIndex = (this.dealerIndex + 1) % 4;
@@ -113,7 +134,11 @@ export class GameService {
     return hands;
   }
 
-  /** Called when `currentOrderPlayer` orders up */
+  /**
+   * Called when a player orders up the upcard (first round of trump selection).
+   * Sets trump, gives the dealer the kitty card, and handles discard if needed.
+   * @param player The player ordering up
+   */
   orderUpBy(player: number): void {
     if (!this.currentKitty) return;
     this.logEvent(`Player ${player + 1} orders up ${this.currentKitty.suit.toUpperCase()}`);
@@ -150,7 +175,12 @@ export class GameService {
     this.trumpCaller = player;
   }
 
-  /** Called when a player chooses a suit in 2nd round */
+  /**
+   * Called when a player chooses a suit in the second round of trump selection.
+   * Sets trump to the chosen suit. Dealer does not pick up the kitty in this round.
+   * @param player The player choosing trump
+   * @param suit The suit chosen as trump
+   */
   orderUpSecondRound(player: number, suit: Suit): void {
     this.logEvent(`Player ${player + 1} orders up ${suit.toUpperCase()} (2nd round)`);
     this.trump = suit;
@@ -162,7 +192,10 @@ export class GameService {
     this.trumpCaller = player;
   }
 
-  /** Remove chosen card from hand and continue play */
+  /**
+   * Remove the chosen card from the dealer's hand after picking up the kitty.
+   * @param card The card to discard
+   */
   discard(card: Card): void {
     const hand = this.currentHands[0];
     const idx = hand.findIndex(c => c.rank === card.rank && c.suit === card.suit);
@@ -170,7 +203,11 @@ export class GameService {
     this.awaitingDiscard = false;
   }
 
-  /** Called when `currentOrderPlayer` passes */
+  /**
+   * Called when a player passes during the trump selection phase.
+   * Handles advancing the order phase and forcing dealer to pick if needed.
+   * @param player The player passing
+   */
   passBy(player: number): void {
     if (this.orderRound === 0) return;
     this.logEvent(`Player ${player + 1} passes`);
@@ -201,7 +238,11 @@ export class GameService {
     // AUTO-PASS for AI seats (handled in processOrdering)
   }
 
-  // Play a card and resolve the trick if all four have played
+  /**
+   * Play a card for a player and resolve the trick if all four have played.
+   * @param player The player index
+   * @param card The card to play
+   */
   playCard(player: number, card: Card): void {
     const hand = this.currentHands[player];
     const idx = hand.findIndex(c => c.rank === card.rank && c.suit === card.suit);
@@ -215,8 +256,11 @@ export class GameService {
     }
   }
 
-
-  // Resolve the current trick using Euchre rules & set next leader
+  /**
+   * Resolve the current trick using Euchre rules and set the next leader.
+   * Determines the winner of the trick based on effective suit and card weight.
+   * If all tricks are done, scores the hand.
+   */
   private resolveTrick(): void {
     if (this.currentTrick.length !== 4 || this.trump === null) return;
 
@@ -257,6 +301,8 @@ export class GameService {
    * - 2pt: defenders win 3+ (euchre)
    * - 4pt: lone hand march (makers alone)
    * - 4pt: lone defender euchres lone maker
+   *
+   * Handles lone hand detection and updates team scores. Starts a new hand after scoring.
    */
   private scoreHand(): void {
     // Determine teams: 0 & 2 vs 1 & 3
@@ -312,7 +358,10 @@ export class GameService {
     }, 2000);
   }
 
-  // Create a standard 24-card Euchre deck
+  /**
+   * Create a standard 24-card Euchre deck (9-A in each suit).
+   * @returns The deck as an array of Card objects
+   */
   private createDeck(): Card[] {
     const suits: Suit[] = ['hearts', 'diamonds', 'clubs', 'spades'];
     const ranks: Rank[] = ['9', '10', 'J', 'Q', 'K', 'A'];
@@ -325,7 +374,10 @@ export class GameService {
     return deck;
   }
 
-  // In-place Fisher–Yates shuffle
+  /**
+   * Shuffle a deck of cards in place using the Fisher–Yates algorithm.
+   * @param deck The deck to shuffle
+   */
   private shuffle(deck: Card[]): void {
     for (let i = deck.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
