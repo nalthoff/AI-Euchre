@@ -31,6 +31,10 @@ export class GameBoardComponent implements OnInit, OnDestroy {
   flyingCard: { card: Card, fromSeat: number } | null = null;
   flyingCardAnimation = false;
 
+  showLog = false;
+  showEndRound = false;
+  endRoundMessage = '';
+
   constructor(
     public gameSvc: GameService,
     private aiService: AiOpponentService,
@@ -47,6 +51,20 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     this.handStartedsub.add(
       this.gameSvc.handStarted.subscribe(() => this.processOrdering())
     );
+    // Listen for end of hand to show summary
+    this.sub.add(
+      this.gameSvc.handStarted.subscribe(() => {
+        this.showEndRound = false;
+      })
+    );
+    // Listen for hand end (scoreHand triggers new hand after delay)
+    const origScoreHand = (this.gameSvc as any).scoreHand?.bind(this.gameSvc);
+    if (origScoreHand) {
+      (this.gameSvc as any).scoreHand = (...args: any[]) => {
+        this.prepareEndRoundSummary();
+        origScoreHand(...args);
+      };
+    }
   }
 
   ngOnDestroy() {
@@ -302,6 +320,39 @@ export class GameBoardComponent implements OnInit, OnDestroy {
   // Used in *ngFor trackBy for cards
   trackCard(index: number, card: Card): string {
     return card.suit + '-' + card.rank;
+  }
+
+  /**
+   * Returns the player index whose turn it is to play a card (0=human, 1=left, 2=top, 3=right),
+   * or null if not in play phase (e.g. during trump selection or discard)
+   */
+  get currentTurn(): number | null {
+    // If in trump selection or discard, no one is playing a card
+    if (!this.gameSvc.trump || this.gameSvc.awaitingDiscard || this.gameSvc.orderRound > 0) {
+      return null;
+    }
+    // During play: next to play is (currentLeader + currentTrick.length) % 4
+    return (this.gameSvc.currentLeader + this.gameSvc.currentTrick.length) % 4;
+  }
+
+  prepareEndRoundSummary() {
+    // Compose a summary message based on last hand's result
+    // (You may want to improve this logic based on your scoring implementation)
+    const log = this.gameLog;
+    const lastScoreMsg = log.reverse().find(l => l.includes('score') || l.includes('wins the game!'));
+    this.endRoundMessage = lastScoreMsg || 'Hand complete!';
+    this.showEndRound = true;
+  }
+
+  nextHand() {
+    this.showEndRound = false;
+    this.gameSvc.dealHands();
+  }
+
+  getScorePercent(team: 0 | 1): number {
+    const score = this.gameSvc.teamScores[team];
+    const max = 10;
+    return Math.min(100, Math.round((score / max) * 100));
   }
 
 }

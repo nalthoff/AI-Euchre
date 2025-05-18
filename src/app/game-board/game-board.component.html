@@ -5,21 +5,29 @@
   </div>
 
   <!-- Score bar displaying team scores -->
-  <div class="score-bar">
-    <span class="team-score">Us: <b>{{ gameSvc.teamScores[0] }}</b></span>
-    <span class="team-score">Them: <b>{{ gameSvc.teamScores[1] }}</b></span>
+  <div class="score-bar improved-score-bar">
+    <div class="team-score us-team" [class.leading]="gameSvc.teamScores[0] > gameSvc.teamScores[1]">
+      <span class="score-label">Us</span>
+      <span class="score-value">{{ gameSvc.teamScores[0] }}</span>
+      <span class="score-bar-fill" [style.width]="getScorePercent(0) + '%'" ></span>
+    </div>
+    <div class="team-score them-team" [class.leading]="gameSvc.teamScores[1] > gameSvc.teamScores[0]">
+      <span class="score-label">Them</span>
+      <span class="score-value">{{ gameSvc.teamScores[1] }}</span>
+      <span class="score-bar-fill" [style.width]="getScorePercent(1) + '%'" ></span>
+    </div>
   </div>
 
   <!-- 1) Trump selection, until trump is chosen -->
-  <div class="trump-selection" *ngIf="!gameSvc.trump && gameSvc.currentKitty && !gameSvc.awaitingDiscard">
-      <div class="order-indicator">
-    <p *ngIf="gameSvc.currentOrderPlayer === 0">
-      Your turn to decide trump
-    </p>
-    <p *ngIf="gameSvc.currentOrderPlayer !== 0">
-      Player {{ gameSvc.currentOrderPlayer + 1 }} is deciding…
-    </p>
-  </div>
+  <div class="trump-selection trump-selection-overlay" *ngIf="!gameSvc.trump && gameSvc.currentKitty && !gameSvc.awaitingDiscard">
+    <div class="order-indicator">
+      <p *ngIf="gameSvc.currentOrderPlayer === 0">
+        <b>Your turn to decide trump</b>
+      </p>
+      <p *ngIf="gameSvc.currentOrderPlayer !== 0">
+        Player {{ gameSvc.currentOrderPlayer + 1 }} is deciding…
+      </p>
+    </div>
     <h3>Trump Up:</h3>
     <div class="card trump-card">
       <span class="rank">{{ gameSvc.currentKitty.rank }}</span>
@@ -32,13 +40,14 @@
       </span>
     </div>
     <div class="trump-actions">
-      <button (click)="onOrderAction()">Order Up</button>
-      <button (click)="onPassAction()">Pass</button>
+      <button (click)="onOrderAction()" [disabled]="gameSvc.currentOrderPlayer !== 0">Order Up</button>
+      <button (click)="onPassAction()" [disabled]="gameSvc.currentOrderPlayer !== 0">Pass</button>
     </div>
+    <div class="trump-round-label">First Round</div>
   </div>
 
   <!-- 2) AI seats, once trump is set -->
-  <div class="seat top" *ngIf="gameSvc.currentHands.length > 0">
+  <div class="seat top" *ngIf="gameSvc.currentHands.length > 0" [class.current-turn]="currentTurn === 2">
     <span class="dealer-indicator" *ngIf="gameSvc.dealerIndex === 2">Dealer</span>
     <h4>Player 3 <span class="trick-count">Tricks: {{ gameSvc.tricksWon[2] }}</span></h4>
     <div class="cards">
@@ -48,7 +57,7 @@
       Trump: {{ suitSymbols[gameSvc.trump] }}
     </div>
   </div>
-  <div class="seat left" *ngIf="gameSvc.currentHands.length > 0">
+  <div class="seat left" *ngIf="gameSvc.currentHands.length > 0" [class.current-turn]="currentTurn === 1">
     <span class="dealer-indicator" *ngIf="gameSvc.dealerIndex === 1">Dealer</span>
     <h4>Player 2 <span class="trick-count">Tricks: {{ gameSvc.tricksWon[1] }}</span></h4>
     <div class="cards">
@@ -58,7 +67,7 @@
       Trump: {{ suitSymbols[gameSvc.trump] }}
     </div>
   </div>
-  <div class="seat right" *ngIf="gameSvc.currentHands.length > 0">
+  <div class="seat right" *ngIf="gameSvc.currentHands.length > 0" [class.current-turn]="currentTurn === 3">
     <span class="dealer-indicator" *ngIf="gameSvc.dealerIndex === 3">Dealer</span>
     <h4>Player 4 <span class="trick-count">Tricks: {{ gameSvc.tricksWon[3] }}</span></h4>
     <div class="cards">
@@ -110,11 +119,11 @@
         </span>
       </div>
     </div>
-    <button class="advance-hint" *ngIf="currentTrick.length === 4" (click)="onAdvanceTrick()">Advance to the next trick</button>
+    <button class="advance-hint" *ngIf="currentTrick.length === 4 && currentTurn === 0" (click)="onAdvanceTrick()">Advance to the next trick</button>
   </div>
 
   <!-- 4) Human hand at bottom; clickable cards -->
-  <div class="seat bottom" *ngIf="gameSvc.currentHands.length > 0">
+  <div class="seat bottom" *ngIf="gameSvc.currentHands.length > 0" [class.current-turn]="currentTurn === 0">
     <span class="dealer-indicator" *ngIf="gameSvc.dealerIndex === 0">Dealer</span>
     <h4>Your Hand <span class="trick-count">Tricks: {{ gameSvc.tricksWon[0] }}</span></h4>
     <div *ngIf="gameSvc.trumpCaller === 0 && gameSvc.trump" class="trump-indicator-inline">
@@ -124,12 +133,11 @@
       Click a card below to discard
     </p>
     <div class="cards">
-      <!-- <div class="card" *ngFor="let card of gameSvc.currentHands[0]" (click)="onCardClick(card)"> -->
       <div class="card" *ngFor="let card of gameSvc.currentHands[0]; trackBy: trackCard"
-        (click)="gameSvc.awaitingDiscard ? onDiscardCard(card) : onCardClick(card)"
+        (click)="gameSvc.awaitingDiscard ? (currentTurn === 0 ? onDiscardCard(card) : null) : (currentTurn === 0 && isCardValidToPlay(card) ? onCardClick(card) : null)"
         [class.discarding]="gameSvc.awaitingDiscard"
-        [class.valid-playable]="!gameSvc.awaitingDiscard && isCardValidToPlay(card)">
-
+        [class.valid-playable]="!gameSvc.awaitingDiscard && isCardValidToPlay(card) && currentTurn === 0"
+        [class.disabled]="currentTurn !== 0">
         <span class="rank">{{ card.rank }}</span>
         <span class="suit" [ngClass]="{
             'red-suit': card.suit==='hearts'||card.suit==='diamonds'
@@ -146,23 +154,35 @@
 
   <!-- 5) Game log panel -->
   <div class="game-log-panel" *ngIf="gameSvc.currentHands.length > 0 && gameSvc.currentHands[0] && gameSvc.currentHands[0].length > 0">
-    <h4>Game Log</h4>
-    <ul class="game-log-list">
+    <div class="game-log-header" (click)="showLog = !showLog">
+      <h4>Game Log</h4>
+      <button class="toggle-log-btn">{{ showLog ? 'Hide' : 'Show' }}</button>
+    </div>
+    <ul class="game-log-list" *ngIf="showLog">
       <li *ngFor="let entry of gameLog.slice(-10)">{{ entry }}</li>
     </ul>
   </div>
 
+  <!-- End-of-round summary modal -->
+  <div class="end-round-modal" *ngIf="showEndRound">
+    <div class="end-round-content">
+      <h2>Hand Complete!</h2>
+      <p>{{ endRoundMessage }}</p>
+      <button (click)="restart()">New Game</button>
+      <button (click)="nextHand()">Next Hand</button>
+    </div>
+  </div>
+
   <!-- Additional trump selection UI for 2nd round -->
-  <div class="trump-selection" *ngIf="!gameSvc.trump && !gameSvc.awaitingDiscard && gameSvc.orderRound === 2 && gameSvc.currentOrderPlayer === 0">
+  <div class="trump-selection trump-selection-overlay" *ngIf="!gameSvc.trump && !gameSvc.awaitingDiscard && gameSvc.orderRound === 2 && gameSvc.currentOrderPlayer === 0">
     <div class="order-indicator">
-      <p>Your turn to choose trump (2nd round)</p>
+      <p><b>Your turn to choose trump (2nd round)</b></p>
     </div>
     <div class="trump-actions">
-      <button *ngFor="let suit of availableSuits" (click)="onOrderSecondRound(suit)">
-        Choose {{ suit | titlecase }}
-      </button>
+      <button *ngFor="let suit of availableSuits" (click)="onOrderSecondRound(suit)">{{ 'Choose ' + (suit | titlecase) }}</button>
       <button (click)="onPassAction()">Pass</button>
     </div>
+    <div class="trump-round-label">Second Round</div>
   </div>
 
   <!-- Flying card animation overlay -->
