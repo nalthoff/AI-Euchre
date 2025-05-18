@@ -119,7 +119,7 @@
         </span>
       </div>
     </div>
-    <button class="advance-hint" *ngIf="currentTrick.length === 4 && currentTurn === 0" (click)="onAdvanceTrick()">Advance to the next trick</button>
+    <button class="advance-hint" *ngIf="currentTrick.length === 4" (click)="onAdvanceTrick()">Advance to the next trick</button>
   </div>
 
   <!-- 4) Human hand at bottom; clickable cards -->
@@ -134,10 +134,10 @@
     </p>
     <div class="cards">
       <div class="card" *ngFor="let card of gameSvc.currentHands[0]; trackBy: trackCard"
-        (click)="gameSvc.awaitingDiscard ? (currentTurn === 0 ? onDiscardCard(card) : null) : (currentTurn === 0 && isCardValidToPlay(card) ? onCardClick(card) : null)"
+        (click)="gameSvc.awaitingDiscard && currentTurn === 0 ? onDiscardCard(card) : (!gameSvc.awaitingDiscard && currentTurn === 0 && isCardValidToPlay(card) ? onCardClick(card) : null)"
         [class.discarding]="gameSvc.awaitingDiscard"
         [class.valid-playable]="!gameSvc.awaitingDiscard && isCardValidToPlay(card) && currentTurn === 0"
-        [class.disabled]="currentTurn !== 0">
+        [class.disabled]="!((gameSvc.awaitingDiscard && currentTurn === 0) || (!gameSvc.awaitingDiscard && currentTurn === 0))">
         <span class="rank">{{ card.rank }}</span>
         <span class="suit" [ngClass]="{
             'red-suit': card.suit==='hearts'||card.suit==='diamonds'
