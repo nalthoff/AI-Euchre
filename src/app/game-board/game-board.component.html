@@ -49,32 +49,29 @@
   <!-- 2) AI seats, once trump is set -->
   <div class="seat top" *ngIf="gameSvc.currentHands.length > 0" [class.current-turn]="currentTurn === 2">
     <span class="dealer-indicator" *ngIf="gameSvc.dealerIndex === 2">Dealer</span>
-    <h4>Player 3 <span class="trick-count">Tricks: {{ gameSvc.tricksWon[2] }}</span></h4>
+    <h4>Player 3 <span class="trick-count">Tricks: {{ gameSvc.tricksWon[2] }}</span>
+      <span *ngIf="gameSvc.trumpCaller === 2 && gameSvc.trump" class="trump-indicator-inline">{{ suitSymbols[gameSvc.trump] }}</span>
+    </h4>
     <div class="cards">
       <div class="card-back" *ngFor="let _ of gameSvc.currentHands[2]">🂠</div>
-    </div>
-    <div *ngIf="gameSvc.trumpCaller === 2 && gameSvc.trump" class="trump-indicator-inline">
-      Trump: {{ suitSymbols[gameSvc.trump] }}
     </div>
   </div>
   <div class="seat left" *ngIf="gameSvc.currentHands.length > 0" [class.current-turn]="currentTurn === 1">
     <span class="dealer-indicator" *ngIf="gameSvc.dealerIndex === 1">Dealer</span>
-    <h4>Player 2 <span class="trick-count">Tricks: {{ gameSvc.tricksWon[1] }}</span></h4>
+    <h4>Player 2 <span class="trick-count">Tricks: {{ gameSvc.tricksWon[1] }}</span>
+      <span *ngIf="gameSvc.trumpCaller === 1 && gameSvc.trump" class="trump-indicator-inline">{{ suitSymbols[gameSvc.trump] }}</span>
+    </h4>
     <div class="cards">
       <div class="card-back" *ngFor="let _ of gameSvc.currentHands[1]">🂠</div>
-    </div>
-    <div *ngIf="gameSvc.trumpCaller === 1 && gameSvc.trump" class="trump-indicator-inline">
-      Trump: {{ suitSymbols[gameSvc.trump] }}
     </div>
   </div>
   <div class="seat right" *ngIf="gameSvc.currentHands.length > 0" [class.current-turn]="currentTurn === 3">
     <span class="dealer-indicator" *ngIf="gameSvc.dealerIndex === 3">Dealer</span>
-    <h4>Player 4 <span class="trick-count">Tricks: {{ gameSvc.tricksWon[3] }}</span></h4>
+    <h4>Player 4 <span class="trick-count">Tricks: {{ gameSvc.tricksWon[3] }}</span>
+      <span *ngIf="gameSvc.trumpCaller === 3 && gameSvc.trump" class="trump-indicator-inline">{{ suitSymbols[gameSvc.trump] }}</span>
+    </h4>
     <div class="cards">
       <div class="card-back" *ngFor="let _ of gameSvc.currentHands[3]">🂠</div>
-    </div>
-    <div *ngIf="gameSvc.trumpCaller === 3 && gameSvc.trump" class="trump-indicator-inline">
-      Trump: {{ suitSymbols[gameSvc.trump] }}
     </div>
   </div>
 
@@ -125,10 +122,9 @@
   <!-- 4) Human hand at bottom; clickable cards -->
   <div class="seat bottom" *ngIf="gameSvc.currentHands.length > 0" [class.current-turn]="currentTurn === 0">
     <span class="dealer-indicator" *ngIf="gameSvc.dealerIndex === 0">Dealer</span>
-    <h4>Your Hand <span class="trick-count">Tricks: {{ gameSvc.tricksWon[0] }}</span></h4>
-    <div *ngIf="gameSvc.trumpCaller === 0 && gameSvc.trump" class="trump-indicator-inline">
-      Trump: {{ suitSymbols[gameSvc.trump] }}
-    </div>
+    <h4>Your Hand <span class="trick-count">Tricks: {{ gameSvc.tricksWon[0] }}</span>
+      <span *ngIf="gameSvc.trumpCaller === 0 && gameSvc.trump" class="trump-indicator-inline">{{ suitSymbols[gameSvc.trump] }}</span>
+    </h4>
     <p *ngIf="gameSvc.awaitingDiscard" class="discard-hint">
       Click a card below to discard
     </p>
