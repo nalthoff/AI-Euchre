@@ -50,6 +50,9 @@ export class GameService {
 
   public trumpCaller: number | null = null;
 
+  /** Number of tricks won by each player in the current hand */
+  public tricksWon: number[] = [0, 0, 0, 0];
+
   private logEvent(msg: string) {
     this.gameLog.push(msg);
     // Optionally limit log size
@@ -95,6 +98,7 @@ export class GameService {
 
     this.availableSuits = ['hearts', 'diamonds', 'clubs', 'spades'];
     this.trumpCaller = null;
+    this.tricksWon = [0, 0, 0, 0];
 
     return hands;
   }
@@ -226,6 +230,7 @@ export class GameService {
 
     // 4) Set the leader for the next trick
     this.currentLeader = winningPlay.player;
+    this.tricksWon[winningPlay.player]++;
     this.logEvent(`Player ${winningPlay.player + 1} wins the trick`);
 
     // 5) After a short pause, clear the trick and notify listeners

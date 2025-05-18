@@ -29,7 +29,7 @@
   <!-- 2) AI seats, once trump is set -->
   <div class="seat top" *ngIf="gameSvc.currentHands.length > 0">
     <span class="dealer-indicator" *ngIf="gameSvc.dealerIndex === 2">Dealer</span>
-    <h4>Player 3</h4>
+    <h4>Player 3 <span class="trick-count">Tricks: {{ gameSvc.tricksWon[2] }}</span></h4>
     <div class="cards">
       <div class="card-back" *ngFor="let _ of gameSvc.currentHands[2]">🂠</div>
     </div>
@@ -39,7 +39,7 @@
   </div>
   <div class="seat left" *ngIf="gameSvc.currentHands.length > 0">
     <span class="dealer-indicator" *ngIf="gameSvc.dealerIndex === 1">Dealer</span>
-    <h4>Player 2</h4>
+    <h4>Player 2 <span class="trick-count">Tricks: {{ gameSvc.tricksWon[1] }}</span></h4>
     <div class="cards">
       <div class="card-back" *ngFor="let _ of gameSvc.currentHands[1]">🂠</div>
     </div>
@@ -49,7 +49,7 @@
   </div>
   <div class="seat right" *ngIf="gameSvc.currentHands.length > 0">
     <span class="dealer-indicator" *ngIf="gameSvc.dealerIndex === 3">Dealer</span>
-    <h4>Player 4</h4>
+    <h4>Player 4 <span class="trick-count">Tricks: {{ gameSvc.tricksWon[3] }}</span></h4>
     <div class="cards">
       <div class="card-back" *ngFor="let _ of gameSvc.currentHands[3]">🂠</div>
     </div>
@@ -105,7 +105,7 @@
   <!-- 4) Human hand at bottom; clickable cards -->
   <div class="seat bottom" *ngIf="gameSvc.currentHands.length > 0">
     <span class="dealer-indicator" *ngIf="gameSvc.dealerIndex === 0">Dealer</span>
-    <h4>Your Hand</h4>
+    <h4>Your Hand <span class="trick-count">Tricks: {{ gameSvc.tricksWon[0] }}</span></h4>
     <div *ngIf="gameSvc.trumpCaller === 0 && gameSvc.trump" class="trump-indicator-inline">
       Trump: {{ suitSymbols[gameSvc.trump] }}
     </div>
