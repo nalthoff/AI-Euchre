@@ -22,9 +22,9 @@ jobs:
         with:
           submodules: true
           lfs: false
-          persist-credentials: false  # Added this line to fix permission issue
+          persist-credentials: false
 
-      - name: Fix Git Config Permissions  # New step to ensure permissions
+      - name: Fix Git Config Permissions
         run: |
           sudo chmod -R u+w .git/config
 
@@ -39,7 +39,7 @@ jobs:
                const coredemo = require('@actions/core')
                return await coredemo.getIDToken()
            result-encoding: string
-           
+
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
@@ -47,9 +47,11 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+        working-directory: euchre-client
 
       - name: Build app
         run: npm run build -- --output-path=dist/euchre-client
+        working-directory: euchre-client
 
       - name: Build And Deploy
         id: builddeploy
@@ -57,7 +59,7 @@ jobs:
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_AMBITIOUS_WAVE_0B10F9510 }}
           action: "upload"
-          app_location: "/" # App source code path
-          api_location: "" # Api source code path - optional
-          output_location: "dist/euchre-client" # Built app content directory - optional
+          app_location: "euchre-client" # <-- FIXED
+          api_location: ""
+          output_location: "dist/euchre-client"
           github_id_token: ${{ steps.idtoken.outputs.result }}
