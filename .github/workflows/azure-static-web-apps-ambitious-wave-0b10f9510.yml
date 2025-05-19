@@ -47,11 +47,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-        working-directory: euchre-client
 
       - name: Build app
         run: npm run build -- --output-path=dist/euchre-client
-        working-directory: euchre-client
 
       - name: Build And Deploy
         id: builddeploy
@@ -59,7 +57,7 @@ jobs:
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_AMBITIOUS_WAVE_0B10F9510 }}
           action: "upload"
-          app_location: "euchre-client" # <-- FIXED
+          app_location: "/" # App source code path (repo root)
           api_location: ""
           output_location: "dist/euchre-client"
           github_id_token: ${{ steps.idtoken.outputs.result }}
