@@ -39,7 +39,19 @@ jobs:
                const coredemo = require('@actions/core')
                return await coredemo.getIDToken()
            result-encoding: string
+           
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
 
+      - name: Install dependencies
+        run: npm ci
+        working-directory: euchre-client
+
+      - name: Build app
+        run: npm run build -- --output-path=dist/euchre-client
+        working-directory: euchre-client
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
