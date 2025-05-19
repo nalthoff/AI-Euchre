@@ -11,6 +11,7 @@
   gap: 1rem;
   padding: 1rem;
   background-color: #006400; // felt-green table background
+  min-height: 80vh;
 }
 
 .trump-indicator {
@@ -504,4 +505,79 @@
   font-weight: bold;
   z-index: 2;
   margin-bottom: 0.1em;
+}
+
+/* Responsive adjustments for tablets and smaller screens */
+@media (max-width: 1100px) {
+  .game-board {
+    grid-template-areas:
+      "top top top"
+      "left main right"
+      "bottom bottom bottom";
+    grid-template-columns: 1fr 2fr 1fr;
+    padding: 0.5rem;
+  }
+  .trick-cards-plus {
+    width: 170px;
+    height: 170px;
+  }
+  .card, .card-back {
+    width: 60px;
+    height: 90px;
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .game-board {
+    grid-template-areas:
+      "top"
+      "main"
+      "left"
+      "right"
+      "bottom";
+    grid-template-columns: 1fr;
+    grid-auto-rows: min-content;
+    gap: 0.5rem;
+    padding: 0.2rem;
+  }
+  .seat, .trick-area, .restart-container, .game-log-panel {
+    max-width: 98vw;
+    margin: 0 auto;
+  }
+  .trick-cards-plus {
+    width: 120px;
+    height: 120px;
+  }
+  .card, .card-back {
+    width: 44px;
+    height: 66px;
+    font-size: 0.95rem;
+  }
+  .improved-score-bar {
+    position: static;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+    top: unset;
+    right: unset;
+  }
+}
+
+@media (max-width: 600px) {
+  .game-board {
+    padding: 0;
+    gap: 0.2rem;
+  }
+  .trick-cards-plus {
+    width: 80px;
+    height: 80px;
+  }
+  .card, .card-back {
+    width: 32px;
+    height: 48px;
+    font-size: 0.7rem;
+  }
+  .improved-score-bar {
+    font-size: 1rem;
+  }
 }
