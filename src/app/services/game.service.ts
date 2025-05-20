@@ -352,10 +352,6 @@ export class GameService {
       this.logEvent(`Team ${scoredTeam+1} wins the game!`);
       // Optionally: reset scores or show dialog
     }
-    // Start new hand
-    setTimeout(() => {
-      this.dealHands();
-    }, 2000);
   }
 
   /**
