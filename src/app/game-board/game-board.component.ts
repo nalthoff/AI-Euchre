@@ -336,11 +336,39 @@ export class GameBoardComponent implements OnInit, OnDestroy {
   }
 
   prepareEndRoundSummary() {
-    // Compose a summary message based on last hand's result
-    // (You may want to improve this logic based on your scoring implementation)
-    const log = this.gameLog;
-    const lastScoreMsg = log.reverse().find(l => l.includes('score') || l.includes('wins the game!'));
-    this.endRoundMessage = lastScoreMsg || 'Hand complete!';
+    // Compose a user-focused summary for the last hand
+    const playerIndex = 0; // human is always player 0
+    const tricks = this.gameSvc.tricksWon[playerIndex];
+    const team = playerIndex % 2; // 0 for team 0 (us), 1 for team 1 (them)
+    const oppTeam = 1 - team;
+    const teamTricks = this.gameSvc.tricksWon[0] + this.gameSvc.tricksWon[2];
+    const oppTricks = this.gameSvc.tricksWon[1] + this.gameSvc.tricksWon[3];
+    const wasMaker = this.gameSvc.trumpCaller !== null && (this.gameSvc.trumpCaller % 2 === team);
+    const pointsBefore = this.gameSvc.teamScores[team] - (this.gameSvc.tricksWon[0] + this.gameSvc.tricksWon[2] >= 3 ? (this.gameSvc.tricksWon[0] + this.gameSvc.tricksWon[2] === 5 ? 2 : 1) : 0);
+    const pointsAfter = this.gameSvc.teamScores[team];
+    const pointsGained = pointsAfter - pointsBefore;
+    let msg = '';
+    if (wasMaker) {
+      if (teamTricks >= 3 && teamTricks < 5) {
+        msg = `You called trump and took ${tricks} trick${tricks !== 1 ? 's' : ''}. Your team scores 1 point.`;
+      } else if (teamTricks === 5) {
+        msg = `You called trump and your team took all 5 tricks! March for 2 points.`;
+      } else {
+        msg = `You called trump but got euchred! Opponents score 2 points.`;
+      }
+    } else {
+      if (oppTricks >= 3) {
+        msg = `Opponents called trump but you euchred them! Your team scores 2 points.`;
+      } else {
+        msg = `Opponents called trump. You took ${tricks} trick${tricks !== 1 ? 's' : ''}.`;
+        if (oppTricks === 5) {
+          msg += ' They made a march for 2 points.';
+        } else if (oppTricks >= 3) {
+          msg += ' They score 1 point.';
+        }
+      }
+    }
+    this.endRoundMessage = msg;
     this.showEndRound = true;
   }
 
