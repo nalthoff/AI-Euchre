@@ -1,10 +1,4 @@
 <div class="game-board">
-  <!-- DEBUG: Show current trump caller and suit for troubleshooting -->
-<!--   <div *ngIf="gameSvc.trumpCaller !== null && gameSvc.trump" class="trump-indicator">
-    Trump called by Player {{ gameSvc.trumpCaller + 1 }}: {{ suitSymbols[gameSvc.trump] }}
-  </div>
--->
-  
   <!-- Score bar displaying team scores -->
   <div class="score-bar improved-score-bar">
     <div class="team-score us-team" [class.leading]="gameSvc.teamScores[0] > gameSvc.teamScores[1]">

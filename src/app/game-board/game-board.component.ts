@@ -61,8 +61,13 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     const origScoreHand = (this.gameSvc as any).scoreHand?.bind(this.gameSvc);
     if (origScoreHand) {
       (this.gameSvc as any).scoreHand = (...args: any[]) => {
-        this.prepareEndRoundSummary();
+        // Capture previous scores before scoring
+        const prevScores = [
+          this.gameSvc.teamScores[0],
+          this.gameSvc.teamScores[1]
+        ];
         origScoreHand(...args);
+        this.prepareEndRoundSummary(prevScores);
       };
     }
   }
@@ -335,7 +340,7 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     return (this.gameSvc.currentLeader + this.gameSvc.currentTrick.length) % 4;
   }
 
-  prepareEndRoundSummary() {
+  prepareEndRoundSummary(prevScores?: number[]) {
     // Compose a user-focused summary for the last hand
     const playerIndex = 0; // human is always player 0
     const tricks = this.gameSvc.tricksWon[playerIndex];
@@ -345,54 +350,23 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     const oppTricks = this.gameSvc.tricksWon[1] + this.gameSvc.tricksWon[3];
     const trumpSuit = this.gameSvc.trump ? this.gameSvc.trump.charAt(0).toUpperCase() + this.gameSvc.trump.slice(1) : 'Unknown';
 
-    // Calculate previous scores by subtracting the points just awarded
-    // Use the same logic as scoreHand()
-    const maker = this.gameSvc.trumpCaller!;
-    const makerTeam = maker % 2;
-    const defenderTeam = 1 - makerTeam;
-    const makerTricks = makerTeam === 0 ? teamTricks : oppTricks;
-    const defenderTricks = defenderTeam === 0 ? teamTricks : oppTricks;
-    // Lone hand detection: use handStartHandSizes snapshot
-    const loneMaker = (this.gameSvc['handStartHandSizes'][maker] === 5 && this.gameSvc['handStartHandSizes'][(maker+2)%4] === 0);
-    const loneDefender = (this.gameSvc['handStartHandSizes'][defenderTeam] === 5 && this.gameSvc['handStartHandSizes'][(defenderTeam+2)%4] === 0);
-    let points = 0;
-    let scoredTeam = makerTeam;
-    if (makerTricks >= 3 && makerTricks < 5) {
-      points = 1;
-      scoredTeam = makerTeam;
-    } else if (makerTricks === 5) {
-      if (loneMaker) {
-        points = 4;
-        scoredTeam = makerTeam;
-      } else {
-        points = 2;
-        scoredTeam = makerTeam;
-      }
-    } else if (defenderTricks >= 3) {
-      if (loneDefender) {
-        points = 4;
-        scoredTeam = defenderTeam;
-      } else {
-        points = 2;
-        scoredTeam = defenderTeam;
-      }
-    }
-    const prevScores = [
-      this.gameSvc.teamScores[0],
-      this.gameSvc.teamScores[1]
-    ];
-    prevScores[scoredTeam] -= points;
-    const pointsGained = [
-      this.gameSvc.teamScores[0] - prevScores[0],
-      this.gameSvc.teamScores[1] - prevScores[1]
-    ];
+    // Use previous scores if provided, otherwise fallback to old logic
     let pointsMsg = '';
-    if (pointsGained[team] > 0) {
-      pointsMsg = `Your team (Players ${team === 0 ? '1 & 3' : '2 & 4'}) scored ${pointsGained[team]} point${pointsGained[team] !== 1 ? 's' : ''}`;
-    } else if (pointsGained[oppTeam] > 0) {
-      pointsMsg = `Opponents (Players ${oppTeam === 0 ? '1 & 3' : '2 & 4'}) scored ${pointsGained[oppTeam]} point${pointsGained[oppTeam] !== 1 ? 's' : ''}`;
+    if (prevScores) {
+      const pointsGained = [
+        this.gameSvc.teamScores[0] - prevScores[0],
+        this.gameSvc.teamScores[1] - prevScores[1]
+      ];
+      if (pointsGained[team] > 0) {
+        pointsMsg = `Your team (Players ${team === 0 ? '1 & 3' : '2 & 4'}) scored ${pointsGained[team]} point${pointsGained[team] !== 1 ? 's' : ''}`;
+      } else if (pointsGained[oppTeam] > 0) {
+        pointsMsg = `Opponents (Players ${oppTeam === 0 ? '1 & 3' : '2 & 4'}) scored ${pointsGained[oppTeam]} point${pointsGained[oppTeam] !== 1 ? 's' : ''}`;
+      } else {
+        pointsMsg = 'No points were scored this hand.';
+      }
     } else {
-      pointsMsg = 'No points were scored this hand.';
+      // fallback: show nothing or a warning
+      pointsMsg = '(Points info unavailable)';
     }
     let msg = `Trump was ${trumpSuit}.\n`;
     msg += `You took ${tricks} trick${tricks !== 1 ? 's' : ''}.\n`;
