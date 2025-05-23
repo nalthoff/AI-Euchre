@@ -35,6 +35,9 @@ export class GameBoardComponent implements OnInit, OnDestroy {
   showEndRound = false;
   endRoundMessage = '';
 
+  decisionMessages: (string|null)[] = [null, null, null, null];
+  decisionTimeouts: any[] = [null, null, null, null];
+
   constructor(
     public gameSvc: GameService,
     private aiService: AiOpponentService,
@@ -179,12 +182,28 @@ export class GameBoardComponent implements OnInit, OnDestroy {
         this.flyingCardAnimation = false;
         this.flyingCard = null;
         this.gameSvc.playCard(next, aiCard);
-        // If that play filled the trick, let resolveTrick() finish then kick off next via trickResolved
         if (this.gameSvc.currentTrick.length < 4) {
           this.continueAIMoves();
         }
       }, 600);
       break;
+    }
+  }
+
+  showDecisionMessage(player: number, msg: string) {
+    this.decisionMessages[player] = msg;
+    if (this.decisionTimeouts[player]) {
+      clearTimeout(this.decisionTimeouts[player]);
+    }
+    // Defensive: auto-clear after 2s in case
+    this.decisionTimeouts[player] = setTimeout(() => this.clearDecisionMessage(player), 2000);
+  }
+
+  clearDecisionMessage(player: number) {
+    this.decisionMessages[player] = null;
+    if (this.decisionTimeouts[player]) {
+      clearTimeout(this.decisionTimeouts[player]);
+      this.decisionTimeouts[player] = null;
     }
   }
 
@@ -213,14 +232,26 @@ export class GameBoardComponent implements OnInit, OnDestroy {
 
   /** Human or AI orders up */
   onOrderAction(): void {
-    this.gameSvc.orderUpBy(this.gameSvc.currentOrderPlayer);
-    this.processOrdering();
+    const player = this.gameSvc.currentOrderPlayer;
+    const isHuman = player === 0;
+    this.gameSvc.orderUpBy(player);
+    this.showDecisionMessage(player, isHuman ? 'You ordered up' : 'Ordered up');
+    setTimeout(() => {
+      this.clearDecisionMessage(player);
+      this.processOrdering();
+    }, 1000);
   }
 
   /** Human or AI passes */
   onPassAction(): void {
-    this.gameSvc.passBy(this.gameSvc.currentOrderPlayer);
-    this.processOrdering();
+    const player = this.gameSvc.currentOrderPlayer;
+    const isHuman = player === 0;
+    this.gameSvc.passBy(player);
+    this.showDecisionMessage(player, isHuman ? 'You passed' : 'Passed');
+    setTimeout(() => {
+      this.clearDecisionMessage(player);
+      this.processOrdering();
+    }, 1000);
   }
 
   get availableSuits() {
@@ -233,20 +264,25 @@ export class GameBoardComponent implements OnInit, OnDestroy {
   // Human selects a suit for the 2nd round of ordering
   onOrderSecondRound(suit: string) {
     this.gameSvc.orderUpSecondRound(0, suit as any);
-    this.processOrdering();
+    this.showDecisionMessage(0, `You chose ${suit.charAt(0).toUpperCase() + suit.slice(1)}`);
+    setTimeout(() => {
+      this.clearDecisionMessage(0);
+      this.processOrdering();
+    }, 1000);
   }
 
   /** Drive the entire order/pass flow, auto-invoking AI until it’s the human’s turn or order phase ends */
   private processOrdering(): void {
-    // 2nd round: let AI pick a suit or pass
-    while (this.gameSvc.orderRound > 0 && this.gameSvc.currentOrderPlayer !== 0) {
+    // Only process one AI at a time so message/pause is visible
+    if (this.gameSvc.orderRound > 0 && this.gameSvc.currentOrderPlayer !== 0) {
+      const aiPlayer = this.gameSvc.currentOrderPlayer;
       if (this.gameSvc.orderRound === 2) {
         // AI picks best suit or passes
         let bestSuit: string | null = null;
         let bestScore = -1;
         for (const suit of this.gameSvc.availableSuits) {
           // Count trump cards in hand for this suit
-          const hand = this.gameSvc.currentHands[this.gameSvc.currentOrderPlayer];
+          const hand = this.gameSvc.currentHands[aiPlayer];
           const trumpCount = hand.filter(c => CardUtils.getEffectiveSuit(c, suit) === suit).length;
           if (trumpCount > bestScore) {
             bestScore = trumpCount;
@@ -255,21 +291,45 @@ export class GameBoardComponent implements OnInit, OnDestroy {
         }
         // Simple AI: order if at least 2 trump, else pass
         if (bestScore >= 2 && bestSuit) {
-          this.gameSvc.orderUpSecondRound(this.gameSvc.currentOrderPlayer, bestSuit as any);
+          this.showDecisionMessage(aiPlayer, `Ordered ${bestSuit.charAt(0).toUpperCase() + bestSuit.slice(1)}`);
+          setTimeout(() => {
+            this.clearDecisionMessage(aiPlayer);
+            this.gameSvc.orderUpSecondRound(aiPlayer, bestSuit as any);
+            this.processOrdering();
+          }, 1000);
+          return;
         } else {
-          this.gameSvc.passBy(this.gameSvc.currentOrderPlayer);
+          this.showDecisionMessage(aiPlayer, 'Passed');
+          setTimeout(() => {
+            this.clearDecisionMessage(aiPlayer);
+            this.gameSvc.passBy(aiPlayer);
+            this.processOrdering();
+          }, 1000);
+          return;
         }
       } else {
         // 1st round: use existing advice logic
         const advice = this.adviceSvc.getTrumpAdvice(
-          this.gameSvc.currentHands[this.gameSvc.currentOrderPlayer],
+          this.gameSvc.currentHands[aiPlayer],
           this.gameSvc.currentKitty!,
           this.gameSvc.difficulty
         );
         if (advice.action === 'order') {
-          this.gameSvc.orderUpBy(this.gameSvc.currentOrderPlayer);
+          this.showDecisionMessage(aiPlayer, 'Ordered up');
+          setTimeout(() => {
+            this.clearDecisionMessage(aiPlayer);
+            this.gameSvc.orderUpBy(aiPlayer);
+            this.processOrdering();
+          }, 1000);
+          return;
         } else {
-          this.gameSvc.passBy(this.gameSvc.currentOrderPlayer);
+          this.showDecisionMessage(aiPlayer, 'Passed');
+          setTimeout(() => {
+            this.clearDecisionMessage(aiPlayer);
+            this.gameSvc.passBy(aiPlayer);
+            this.processOrdering();
+          }, 1000);
+          return;
         }
       }
     }

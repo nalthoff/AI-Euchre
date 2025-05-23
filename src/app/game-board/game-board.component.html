@@ -47,6 +47,7 @@
     <h4>Player 3 <span class="trick-count">Tricks: {{ gameSvc.tricksWon[2] }}</span>
       <span *ngIf="gameSvc.trumpCaller === 2 && gameSvc.trump" class="trump-indicator-inline">{{ suitSymbols[gameSvc.trump] }}</span>
     </h4>
+    <div class="decision-message" *ngIf="decisionMessages[2]">{{ decisionMessages[2] }}</div>
     <div class="cards">
       <div class="card-back" *ngFor="let _ of gameSvc.currentHands[2]">🂠</div>
     </div>
@@ -56,6 +57,7 @@
     <h4>Player 2 <span class="trick-count">Tricks: {{ gameSvc.tricksWon[1] }}</span>
       <span *ngIf="gameSvc.trumpCaller === 1 && gameSvc.trump" class="trump-indicator-inline">{{ suitSymbols[gameSvc.trump] }}</span>
     </h4>
+    <div class="decision-message" *ngIf="decisionMessages[1]">{{ decisionMessages[1] }}</div>
     <div class="cards">
       <div class="card-back" *ngFor="let _ of gameSvc.currentHands[1]">🂠</div>
     </div>
@@ -65,6 +67,7 @@
     <h4>Player 4 <span class="trick-count">Tricks: {{ gameSvc.tricksWon[3] }}</span>
       <span *ngIf="gameSvc.trumpCaller === 3 && gameSvc.trump" class="trump-indicator-inline">{{ suitSymbols[gameSvc.trump] }}</span>
     </h4>
+    <div class="decision-message" *ngIf="decisionMessages[3]">{{ decisionMessages[3] }}</div>
     <div class="cards">
       <div class="card-back" *ngFor="let _ of gameSvc.currentHands[3]">🂠</div>
     </div>
@@ -120,6 +123,7 @@
     <h4>Your Hand <span class="trick-count">Tricks: {{ gameSvc.tricksWon[0] }}</span>
       <span *ngIf="gameSvc.trumpCaller === 0 && gameSvc.trump" class="trump-indicator-inline">{{ suitSymbols[gameSvc.trump] }}</span>
     </h4>
+    <div class="decision-message" *ngIf="decisionMessages[0]">{{ decisionMessages[0] }}</div>
     <p *ngIf="gameSvc.awaitingDiscard" class="discard-hint">
       Click a card below to discard
     </p>
