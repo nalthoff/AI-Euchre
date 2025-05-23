@@ -17,11 +17,11 @@ import { CardUtils } from '../services/card-utils.service';
 export class GameBoardComponent implements OnInit, OnDestroy {
   @Input() autoAdvance = true;
 
-  private sub = new Subscription();
-  private handStartedsub = new Subscription();
+  private readonly sub = new Subscription();
+  private readonly handStartedsub = new Subscription();
   private autoAdvanceTimeout: any = null;
 
-  suitSymbols: Record<string, string> = {
+  readonly suitSymbols: Record<string, string> = {
     hearts: '♥',
     diamonds: '♦',
     clubs: '♣',
@@ -31,17 +31,17 @@ export class GameBoardComponent implements OnInit, OnDestroy {
   flyingCard: { card: Card, fromSeat: number } | null = null;
   flyingCardAnimation = false;
 
-  showLog = false;
-  showEndRound = false;
-  endRoundMessage = '';
+  public showLog = false;
+  public showEndRound = false;
+  public endRoundMessage = '';
 
-  decisionMessages: (string|null)[] = [null, null, null, null];
-  decisionTimeouts: any[] = [null, null, null, null];
+  private decisionMessages: (string|null)[] = [null, null, null, null];
+  private decisionTimeouts: any[] = [null, null, null, null];
 
   constructor(
-    public gameSvc: GameService,
-    private aiService: AiOpponentService,
-    private adviceSvc: AdviceService
+    public readonly gameSvc: GameService,
+    private readonly aiService: AiOpponentService,
+    private readonly adviceSvc: AdviceService
   ) { }
 
   ngOnInit() {
@@ -108,34 +108,35 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     this.startTrick();
   }
 
-  // Called when user clicks one of their cards
-  onCardClick(card: Card): void {
-    // Only allow click if it's the human's turn
-    const nextToPlay = (this.gameSvc.currentLeader + this.currentTrick.length) % 4;
-    if (nextToPlay !== 0 || !this.gameSvc.trump) {
-      return;
+  /**
+   * Utility to get valid cards for a player (default: human)
+   */
+  private getValidPlayableCards(player: number = 0): Card[] {
+    const nextToPlay = (this.gameSvc.currentLeader + this.gameSvc.currentTrick.length) % 4;
+    if (nextToPlay !== player || !this.gameSvc.trump || this.gameSvc.awaitingDiscard) {
+      return [];
     }
-    // Card validation: must follow suit if possible
     let leadSuit: string | null = null;
-    if (this.currentTrick.length > 0 && this.gameSvc.trump) {
-      leadSuit = CardUtils.getEffectiveSuit(this.currentTrick[0].card, this.gameSvc.trump);
+    if (this.gameSvc.currentTrick.length > 0 && this.gameSvc.trump) {
+      leadSuit = CardUtils.getEffectiveSuit(this.gameSvc.currentTrick[0].card, this.gameSvc.trump);
     }
-    const hand = this.gameSvc.currentHands[0];
-    let validCards: Card[];
+    const hand = this.gameSvc.currentHands[player];
+    if (!hand) return [];
     if (leadSuit) {
       const followCards = hand.filter(
         c => CardUtils.getEffectiveSuit(c, this.gameSvc.trump!) === leadSuit
       );
-      validCards = followCards.length > 0 ? followCards : [...hand];
+      return followCards.length > 0 ? followCards : [...hand];
     } else {
-      validCards = [...hand];
+      return [...hand];
     }
-    // Only allow play if card is valid
+  }
+
+  // Called when user clicks one of their cards
+  onCardClick(card: Card): void {
+    const validCards = this.getValidPlayableCards(0);
     const isValid = validCards.some(c => c.rank === card.rank && c.suit === card.suit);
-    if (!isValid) {
-      // Optionally: provide feedback here (e.g., shake card, flash, etc.)
-      return;
-    }
+    if (!isValid) return;
     // Set flying card state before removing from hand
     this.flyingCard = { card, fromSeat: 0 };
     this.flyingCardAnimation = true;
@@ -224,12 +225,6 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     // Do NOT call this.startTrick() here; let the ordering phase begin naturally
   }
 
-  // Dynamically return whatever the service currently has
-  get hands(): Card[][] {
-    return this.gameSvc.currentHands;
-  }
-
-
   /** Human or AI orders up */
   onOrderAction(): void {
     const player = this.gameSvc.currentOrderPlayer;
@@ -254,12 +249,12 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     }, 1000);
   }
 
-  get availableSuits() {
+  get availableSuits(): readonly string[] {
     return this.gameSvc.availableSuits;
   }
 
   // For 2nd round, store the suit the human selects
-  selectedSecondRoundSuit: string | null = null;
+  private selectedSecondRoundSuit: string | null = null;
 
   // Human selects a suit for the 2nd round of ordering
   onOrderSecondRound(suit: string) {
@@ -271,17 +266,23 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     }, 1000);
   }
 
+  /** Helper to show a decision message, clear after delay, and optionally call a callback */
+  private showDecisionAndContinue(player: number, msg: string, cb: () => void) {
+    this.showDecisionMessage(player, msg);
+    setTimeout(() => {
+      this.clearDecisionMessage(player);
+      cb();
+    }, 1000);
+  }
+
   /** Drive the entire order/pass flow, auto-invoking AI until it’s the human’s turn or order phase ends */
   private processOrdering(): void {
-    // Only process one AI at a time so message/pause is visible
     if (this.gameSvc.orderRound > 0 && this.gameSvc.currentOrderPlayer !== 0) {
       const aiPlayer = this.gameSvc.currentOrderPlayer;
       if (this.gameSvc.orderRound === 2) {
-        // AI picks best suit or passes
         let bestSuit: string | null = null;
         let bestScore = -1;
         for (const suit of this.gameSvc.availableSuits) {
-          // Count trump cards in hand for this suit
           const hand = this.gameSvc.currentHands[aiPlayer];
           const trumpCount = hand.filter(c => CardUtils.getEffectiveSuit(c, suit) === suit).length;
           if (trumpCount > bestScore) {
@@ -289,57 +290,41 @@ export class GameBoardComponent implements OnInit, OnDestroy {
             bestSuit = suit;
           }
         }
-        // Simple AI: order if at least 2 trump, else pass
         if (bestScore >= 2 && bestSuit) {
-          this.showDecisionMessage(aiPlayer, `Ordered ${bestSuit.charAt(0).toUpperCase() + bestSuit.slice(1)}`);
-          setTimeout(() => {
-            this.clearDecisionMessage(aiPlayer);
+          this.showDecisionAndContinue(aiPlayer, `Ordered ${bestSuit.charAt(0).toUpperCase() + bestSuit.slice(1)}`, () => {
             this.gameSvc.orderUpSecondRound(aiPlayer, bestSuit as any);
             this.processOrdering();
-          }, 1000);
+          });
           return;
         } else {
-          this.showDecisionMessage(aiPlayer, 'Passed');
-          setTimeout(() => {
-            this.clearDecisionMessage(aiPlayer);
+          this.showDecisionAndContinue(aiPlayer, 'Passed', () => {
             this.gameSvc.passBy(aiPlayer);
             this.processOrdering();
-          }, 1000);
+          });
           return;
         }
       } else {
-        // 1st round: use existing advice logic
         const advice = this.adviceSvc.getTrumpAdvice(
           this.gameSvc.currentHands[aiPlayer],
           this.gameSvc.currentKitty!,
           this.gameSvc.difficulty
         );
         if (advice.action === 'order') {
-          this.showDecisionMessage(aiPlayer, 'Ordered up');
-          setTimeout(() => {
-            this.clearDecisionMessage(aiPlayer);
+          this.showDecisionAndContinue(aiPlayer, 'Ordered up', () => {
             this.gameSvc.orderUpBy(aiPlayer);
             this.processOrdering();
-          }, 1000);
+          });
           return;
         } else {
-          this.showDecisionMessage(aiPlayer, 'Passed');
-          setTimeout(() => {
-            this.clearDecisionMessage(aiPlayer);
+          this.showDecisionAndContinue(aiPlayer, 'Passed', () => {
             this.gameSvc.passBy(aiPlayer);
             this.processOrdering();
-          }, 1000);
+          });
           return;
         }
       }
     }
-
-    // If the dealer ordered up, we’re now awaiting discard – stop here
-    if (this.gameSvc.awaitingDiscard) {
-      return;
-    }
-
-    // Once orderPhase is 0 and we’re not awaiting discard, start play
+    if (this.gameSvc.awaitingDiscard) return;
     if (this.gameSvc.orderRound === 0) {
       this.startTrick();
     }
@@ -356,25 +341,7 @@ export class GameBoardComponent implements OnInit, OnDestroy {
 
   // Returns the list of valid cards the human can play (for highlighting)
   get validPlayableCards(): Card[] {
-    // Only relevant if it's the human's turn and not discarding
-    const nextToPlay = (this.gameSvc.currentLeader + this.currentTrick.length) % 4;
-    if (nextToPlay !== 0 || !this.gameSvc.trump || this.gameSvc.awaitingDiscard) {
-      return [];
-    }
-    let leadSuit: string | null = null;
-    if (this.currentTrick.length > 0 && this.gameSvc.trump) {
-      leadSuit = CardUtils.getEffectiveSuit(this.currentTrick[0].card, this.gameSvc.trump);
-    }
-    const hand = this.gameSvc.currentHands[0];
-    if (!hand) return [];
-    if (leadSuit) {
-      const followCards = hand.filter(
-        c => CardUtils.getEffectiveSuit(c, this.gameSvc.trump!) === leadSuit
-      );
-      return followCards.length > 0 ? followCards : [...hand];
-    } else {
-      return [...hand];
-    }
+    return this.getValidPlayableCards(0);
   }
 
   // Used in template to check if a card is valid to play
@@ -383,7 +350,7 @@ export class GameBoardComponent implements OnInit, OnDestroy {
   }
 
   // Used in *ngFor trackBy for cards
-  trackCard(index: number, card: Card): string {
+  trackCard(_: number, card: Card): string {
     return card.suit + '-' + card.rank;
   }
 
