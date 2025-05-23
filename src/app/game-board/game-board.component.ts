@@ -35,7 +35,10 @@ export class GameBoardComponent implements OnInit, OnDestroy {
   public showEndRound = false;
   public endRoundMessage = '';
 
-  private decisionMessages: (string|null)[] = [null, null, null, null];
+  public get decisionMessages(): (string|null)[] {
+    return this._decisionMessages;
+  }
+  private _decisionMessages: (string|null)[] = [null, null, null, null];
   private decisionTimeouts: any[] = [null, null, null, null];
 
   constructor(
@@ -192,7 +195,7 @@ export class GameBoardComponent implements OnInit, OnDestroy {
   }
 
   showDecisionMessage(player: number, msg: string) {
-    this.decisionMessages[player] = msg;
+    this._decisionMessages[player] = msg;
     if (this.decisionTimeouts[player]) {
       clearTimeout(this.decisionTimeouts[player]);
     }
@@ -201,7 +204,7 @@ export class GameBoardComponent implements OnInit, OnDestroy {
   }
 
   clearDecisionMessage(player: number) {
-    this.decisionMessages[player] = null;
+    this._decisionMessages[player] = null;
     if (this.decisionTimeouts[player]) {
       clearTimeout(this.decisionTimeouts[player]);
       this.decisionTimeouts[player] = null;
